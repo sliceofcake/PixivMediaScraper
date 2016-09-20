@@ -8,10 +8,12 @@
 		srcA : [],
 		pageI : 1,
 		userID : "",
+		threadOpenA : [],
 		threadOpenC : 0, // inc/dec thread synchronization
 		threadOpenHiC : 0, // for debug output
 		threadOpenLoC : 0, // for debug output
 		el_ad : null,
+		allPageDoneF : false,
 		ll : function(m){console.log(m);},
 		// query selector down
 		qd:function(el,m){
@@ -63,7 +65,11 @@
 			body.appendChild(el);
 			return el;},
 		threadChangeFxn : function(){
-			this.el_ad.innerHTML = "pages opened : "+this.threadOpenHiC+"<br>pages closed : "+this.threadOpenLoC+"<br>outstanding : "+this.threadOpenC;},
+			this.el_ad.innerHTML = p.threadOpenA.join("<br>")+"<br>processing/about-to-process page # "+this.pageI+"<br>pages opened : "+this.threadOpenHiC+"<br>pages closed : "+this.threadOpenLoC+"<br>outstanding : "+this.threadOpenC;},
+		threadEvent : function(type,el){
+			switch (type){default:;
+				break;case "hi":p.threadOpenC++;p.threadOpenHiC++;p.threadOpenA.push(el.src);p.threadChangeFxn();
+				break;case "lo":p.threadOpenC--;p.threadOpenLoC++;var i=p.threadOpenA.indexOf(el.src);if (i===-1){console.log("!!! OH NO "+el.src);}p.threadOpenA.splice(i,1);p.threadChangeFxn();}},
 		setup : function(){
 			var el = document.createElement("div");
 			el.style.position = "fixed";
@@ -94,69 +100,40 @@
 		main : function(){
 			window.location.href.replace(/(?:&|\?)id=(.+?)(?:&|$)/,function(match,p1,offset,string){p.userID = p1;});
 			this.cycle1();},
+		// each run of cycle processes one page
 		cycle1 : function(){
-//		L> foreach page number from 1 to infinity [will detect the first out-of-bounds page and stop]
-//			L> load the given gallery page from url knowledge
+			// put some delay on the next page, so that the browser isn't multitasking too much
+			if (p.threadOpenC > 4){ // if more than 4 open threads [arbitrary number]
+				setTimeout(function(p){return function(){p.cycle1();};}(p),1000);return;}
+			// foreach page, load based off pre-known link format
 			var el = this.genIframe(document.body,"http://www.pixiv.net/member_illust.php?id="+p.userID+"&type=all&p="+this.pageI);
-			p.threadOpenC++;p.threadOpenHiC++;p.threadChangeFxn();el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe,pageI){return function(){
-				p.ll("| "+this.location.href);
-//				L> foreach µ.qd(".thumbnail") as opener
+			p.threadEvent("hi",el);el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe,pageI){return function(){
+				// foreach µ.qd(".thumbnail")
 				var elThumbnailA = p.qdA(this.document.body,"._thumbnail");
 				for (var elThumbnailAI = 0,elThumbnailAC = elThumbnailA.length; elThumbnailAI < elThumbnailAC; elThumbnailAI++){var elThumbnail = elThumbnailA[elThumbnailAI];
-//					L> load elThumbnail.parentNode.parentNode.href
-					var el = p.genIframe(this.document.body,elThumbnail.parentNode.parentNode.href);
-					p.threadOpenC++;p.threadOpenHiC++;p.threadChangeFxn();el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe){return function(){
-						p.ll("L> "+this.location.href);
-//						L> check url for mode=???
-						//var mode;this.location.href.replace(/(?:&|\?)mode=(.+?)(?:&|$)/,function(match,p1,offset,string){mode = p1;});
-						var mode = p.qd(this.document.body,"._work.multiple")===null?"single":"multi";
-						switch (mode){default:;
-//							L> if single
-							break;case "single":
-//								L> dl µ.qd(".original-image").getAttribute("data-src")
-								var link = p.qd(this.document.body,".original-image").getAttribute("data-src");
-								p.ll("save single "+link);
-								p.srcA.push(link);
-								this.parent.document.body.removeChild(elSelfIframe); // remove self from parent DOM
-//							L> if multi
-							break;case "multi":
-//								L> load µ.qd("._layout-thumbnail").parentNode.href
-								var el = p.genIframe(this.document.body,p.qd(this.document.body,"._layout-thumbnail").parentNode.href);
-								p.threadOpenC++;p.threadOpenHiC++;p.threadChangeFxn();el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe){return function(){
-									var elExpandA = p.qdA(this.document.body,".image");
-									for (var elExpandAI = 0,elExpandAC = elExpandA.length; elExpandAI < elExpandAC; elExpandAI++){var elExpand = elExpandA[elExpandAI];
-										var src = elExpand.getAttribute("data-src");
-										var domain;src.replace(/(https?:\/\/.+?\/)/,function(match,p1,offset,string){domain = p1;});
-										var date;src.replace(/(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)/,function(match,p1,offset,string){date = p1;});
-										var ID;src.replace(/\/(\d+)_p/,function(match,p1,offset,string){ID = p1;});
-										var page;src.replace(/\/\d+_p(\d+)/,function(match,p1,offset,string){page = p1;});
-										var extension;src.replace(/(\.[^\.]+)$/,function(match,p1,offset,string){extension = p1;});
-										var link = domain+"img-original/img/"+date+ID+"_p"+page+extension;
-										//p.ll(src+" ... "+domain+" ... "+date+" ... "+ID+" ... "+page+" ... "+extension);
-										p.ll("save multi-part "+link);
-										p.srcA.push(link);}
-									this.parent.document.body.removeChild(elSelfIframe); // remove self from parent DOM
-//									L> foreach µ.qdA(".full-size-container").href as tiger
-									/*var elExpandA = p.qdA(this.document.body,".full-size-container");
-									for (var elExpandAI = 0,elExpandAC = elExpandA.length; elExpandAI < elExpandAC; elExpandAI++){var elExpand = elExpandA[elExpandAI];
-//										L> load tiger
-										var el = p.genIframe(this.document.body,elExpand.href);
-										p.threadOpenC++;p.threadOpenHiC++;p.threadChangeFxn();el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe,elExpandAI,elExpandAC){return function(){
-											p.ll("L> L> "+this.location.href);
-//											L> dl µ.qd("img").src
-											var link = p.qd(this.document.body,"img").src;
-											p.ll("save multi-part "+link);
-											p.srcA.push(link);
-											this.parent.document.body.removeChild(elSelfIframe); // remove self from parent DOM
-										p.threadOpenC--;p.threadOpenLoC++;p.threadChangeFxn();if (p.threadOpenC === 0){p.end();}};}(p,el,elExpandAI,elExpandAC));
-									}*/
-								p.threadOpenC--;p.threadOpenLoC++;p.threadChangeFxn();if (p.threadOpenC === 0){p.end();}};}(p,el));
-						}
-					p.threadOpenC--;p.threadOpenLoC++;p.threadChangeFxn();if (p.threadOpenC === 0){p.end();}};}(p,el));
-				}
-				if (elThumbnailA.length > 0){
-					setTimeout(function(p){return function(){p.pageI++;p.cycle1();};}(p),0);}
-			p.threadOpenC--;p.threadOpenLoC++;p.threadChangeFxn();if (p.threadOpenC === 0){p.end();}};}(this,el,this.pageI));
+					// this thumbnail is a multi
+					if (elThumbnail.parentNode.parentNode.classList.contains("multiple")){
+						// convert the link to manga format based off pre-known link format
+						var mangaLink = elThumbnail.parentNode.parentNode.href.replace("medium","manga");
+						var el = p.genIframe(this.document.body,mangaLink);
+						p.threadEvent("hi",el);el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe){return function(){
+							var elExpandA = p.qdA(this.document.body,".image");
+							for (var elExpandAI = 0,elExpandAC = elExpandA.length; elExpandAI < elExpandAC; elExpandAI++){var elExpand = elExpandA[elExpandAI];
+								var link;elExpand.getAttribute("data-src").replace(/(https?:\/\/.+?\/).+(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+(\.[^\.]+)$/,function(match,domain,date,ID,page,extension,offset,string){link = domain+"img-original/img/"+date+ID+"_p"+page+extension;});
+								p.ll("save multi-part "+link);
+								p.srcA.push(link);}
+							this.parent.document.body.removeChild(elSelfIframe); // remove self from parent DOM, special case here since this is always a dead-end iframe
+						p.threadEvent("lo",elSelfIframe);if (p.allPageDoneF && p.threadOpenC === 0){p.end();}};}(p,el));}
+					// this thumbnail is a single
+					else{
+						var link;elThumbnail.src.replace(/(https?:\/\/.+?\/).+(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+(\.[^\.]+)$/,function(match,domain,date,ID,page,extension,offset,string){link = domain+"img-original/img/"+date+ID+"_p"+page+extension;});
+						p.ll("save single "+link);
+						p.srcA.push(link);}}
+				if (elThumbnailA.length === 0){
+					p.allPageDoneF = true;}
+				else{
+					setTimeout(function(p){return function(){p.pageI++;p.cycle1();};}(p),0);} // put some delay on the next page, so that the browser isn't multitasking too much
+			p.threadEvent("lo",elSelfIframe);if (p.allPageDoneF && p.threadOpenC === 0){p.end();}};}(this,el,this.pageI));
 		},
 	};
 	p.setup();
