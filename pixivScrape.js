@@ -87,7 +87,7 @@
 			el_ab.addEventListener("click",function(p){return function(){p.saveTextAsFile("dummy1.txt","blahblahblah1");p.saveTextAsFile("dummy2.txt","blahblahblah2");p.saveTextAsFile("dummy3.txt","blahblahblah3");};}(this));
 			var el_ac = document.createElement("button");
 			el_ac.style.display = "block";
-			el_ac.textContent = "click here to find all media links and download one command .txt file [can take several minutes]";
+			el_ac.textContent = "click here to find all media links and download one command .txt file";
 			el_ac.addEventListener("click",function(p){return function(){p.main();};}(this));
 			var el_ad = document.createElement("div");
 			this.el_ad = el_ad;

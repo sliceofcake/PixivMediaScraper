@@ -17,6 +17,7 @@ Downloading the images
 sh pixivUser######CurlScript.txt  
 after you've replaced that dummy filename with the actual name of the file that downloaded. Doing this will run those commands in the folder that you want the images to go into. Now just wait and watch the script progress. When it's done, all your images should be in that folder.  
 (4 [Windows command-line]) [PENDING]  
+(5) I recommend that, after all your images have downloaded, you delete the script that was downloaded through the pixiv page. That script will only be for the exact set of images that you just downloaded. If the pixiv user uploads or deletes any of their images, the script file will not reflect that change. You should always run the scraper immediately before downloading the images, and preferably, only partially joking, when the artist is asleep and not making changes to their page.  
   
 [see the JavaScript Console Help section of [https://github.com/sliceofcake/TechnicalHelp](https://github.com/sliceofcake/TechnicalHelp)]  
 [see the Command-Line Help section of [https://github.com/sliceofcake/TechnicalHelp](https://github.com/sliceofcake/TechnicalHelp)]  
@@ -27,5 +28,3 @@ There are some artists that I follow on Twitter. It seems like those artists upl
 Everything that could go wrong, within reason  
 • The scraper never finishes : There's a chance that pixiv will change their interface enough to break the scraper. I expect something like this eventually, and if you post an "Issue" about it here on GitHub, we can work together to try to fix this scraper.  
 • The files won't download : It's possible that pixiv changed their link format. Post an "Issue" about it here on GitHub and we can work together to try to fix this scraper.  
-  
-Note that this pixiv script that got downloaded is only for this exact set of images. If the pixiv user uploads or deletes any of their images, the script file will not reflect this change. You should always run the scraper immediately before downloading the images, and you should probably throw away the curl script when it's done running, so you don't confuse yourself later.  
