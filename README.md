@@ -19,7 +19,7 @@ after you've replaced that dummy filename with the actual name of the file that 
 (4 [Windows command-line]) [PENDING]  
   
 [see the JavaScript Console Help section of [https://github.com/sliceofcake/TechnicalHelp](https://github.com/sliceofcake/TechnicalHelp)]  
-See the Command-Line Help section of [https://github.com/sliceofcake/TechnicalHelp](https://github.com/sliceofcake/TechnicalHelp)  
+[see the Command-Line Help section of [https://github.com/sliceofcake/TechnicalHelp](https://github.com/sliceofcake/TechnicalHelp)]  
   
 Use case  
 There are some artists that I follow on Twitter. It seems like those artists upload about the same set of images to pixiv at roughly the same time [though sometimes one platform will be missing certain works, whether by the artist's intention or accident]. Pixiv images tend to be of higher quality. Pixiv requires even more clicks to reach the "original"-resolution images to download, and has a strange system that won't let you just hop to the final link to download it directly [they look at the HTTP referer header, which is spoofable]. I like these artists, I like their art, but I don't want to sit there for hours jumping through Pixiv's interface hoops to get the artist's images. I made this scraper to automate the difficult part of the "download all images by this artist" process.  
