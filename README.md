@@ -16,7 +16,7 @@ Downloading the images
 (4 [Apple OS command-line]) After the scraper is done, it will download a .txt file that has a bunch of command-line commands in it. I recommend moving this file to the folder you want the images to go, then navigating to that folder from the command-line and running  
 sh pixivUser######CurlScript.txt  
 after you've replaced that dummy filename with the actual name of the file that downloaded. Doing this will run those commands in the folder that you want the images to go into. Now just wait and watch the script progress. When it's done, all your images should be in that folder.  
-(4 [Windows command-line]) [PENDING]  
+(4 [Windows command-line]) [PENDING\]  
 (5) I recommend that, after all your images have downloaded, you delete the script that was downloaded through the pixiv page. That script will only be for the exact set of images that you just downloaded. If the pixiv user uploads or deletes any of their images, the script file will not reflect that change. You should always run the scraper immediately before downloading the images, and preferably, only partially joking, when the artist is asleep and not making changes to their page.  
   
 [see the JavaScript Console Help section of [https://github.com/sliceofcake/TechnicalHelp](https://github.com/sliceofcake/TechnicalHelp)]  
