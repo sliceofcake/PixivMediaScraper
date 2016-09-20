@@ -50,14 +50,25 @@
 		end : function(){this.ll("END");
 			var resA = [];
 			var resS = "";
+			// ! currently, we guess what the original links will be to save a lot of execution time. unfortunately, that will always return ".jpg". most of these images ~are~ ".jpg", but some are .png
 			// curl --header "referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id=########" http://i3.pixiv.net/img-original/img/2016/09/02/23/44/10/########_p0.jpg -o out.jpg
 			for (var srcAI = 0,srcAC = this.srcA.length; srcAI < srcAC; srcAI++){src = this.srcA[srcAI]; // src looks like : http://i3.pixiv.net/img-original/img/2016/09/02/23/44/10/########_p0.jpg
 				var ID;src.replace(/\/(\d+)_p/,function(match,p1,offset,string){ID = p1;});
 				var filename;src.replace(/\/([^\/]+)$/,function(match,p1,offset,string){filename = p1;});
-				resA.push("curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename);}
-			resS = resA.join(";");
-			this.ll(resS);
-			this.saveTextAsFile("pixivUser"+this.userID+"CurlScript.txt",resS);},
+				resA.push("if curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" -I "+src+" | grep -q \"404 Not Found\";"
+					+"then curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src.replace(".jpg",".png")+" -o "+filename.replace(".jpg",".png")+";"
+					+"else curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename+";"
+					+"fi");
+				//resA.push("curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename);
+				}
+			var resAlterA = [];
+			var resAlterS = "";
+			for (var resAI = 0,resAC = resA.length; resAI < resAC; resAI++){var res = resA[resAI];
+				resAlterA.push("("+res+") &");
+				if (resAI%4 === 3){resAlterA.push("wait");}}
+			resAlterS = resAlterA.join("\n"); // \n for Unix
+			this.ll(resAlterS);
+			this.saveTextAsFile("pixivUser"+this.userID+"CurlScript.txt",resAlterS);},
 		genIframe : function(body,src){
 			var el = document.createElement("iframe");
 			el.src = src;
