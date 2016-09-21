@@ -65,8 +65,8 @@
 			var resAlterS = "";
 			for (var resAI = 0,resAC = resA.length; resAI < resAC; resAI++){var res = resA[resAI];
 				resAlterA.push("("+res+") &");
-				if (resAI%4 === 3){resAlterA.push("wait");}}
-			resAlterS = resAlterA.join("\n"); // \n for Unix
+				if (resAI%4 === 3 || resAI === resAC-1){resAlterA.push("wait");}}
+			resAlterS = resAlterA.join("\n")+"\necho \"Success. Pixiv download script finished running. Please verify the existence of exactly "+this.srcA.length+" images.\""; // \n for Unix
 			this.ll(resAlterS);
 			this.saveTextAsFile("pixivUser"+this.userID+"CurlScript.txt",resAlterS);},
 		genIframe : function(body,src){
