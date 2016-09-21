@@ -13,7 +13,7 @@ Downloading the images
 (1) Navigate to the pixiv user's 作品 > 総合 feed, such as http://www.pixiv.net/member_illust.php?id=[[[USERID_HERE]]]  
 (2) Open your browser's JavaScript Console for that page.  
 (3) Paste in the text from pixivScrape.js and run it. You will see a large description box placed at the bottom of the page. Read through it, and eventually click the relevant link/button to run the scraper, once you're ready.  
-(4 [Apple OS command-line]) After the scraper is done, it will download a .txt file that has a bunch of command-line commands in it. I recommend moving this file to the folder you want the images to go, then navigating to that folder from the command-line and running  
+(4 [Apple OS command-line w/sh]) After the scraper is done, it will download a .txt file that has a bunch of command-line commands in it. I recommend moving this file to the folder you want the images to go, then navigating to that folder from the command-line and running  
 sh pixivUser######CurlScript.txt  
 after you've replaced that dummy filename with the actual name of the file that downloaded. Doing this will run those commands in the folder that you want the images to go into. Now just wait and watch the script progress. When it's done, all your images should be in that folder.  
 (4 [Windows command-line]) [PENDING\]  
