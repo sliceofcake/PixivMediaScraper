@@ -199,17 +199,17 @@
 						p.threadEvent("hi",el);el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe){return function(){
 							var elExpandA = p.qdA(this.document.body,".image");
 							for (var elExpandAI = 0,elExpandAC = elExpandA.length; elExpandAI < elExpandAC; elExpandAI++){var elExpand = elExpandA[elExpandAI];
-								var link;elExpand.getAttribute("data-src").replace(/(https?:\/\/.+?\/).+(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+(\.[^\.]+)$/,function(match,domain,date,ID,page,extension,offset,string){link = domain+"img-original/img/"+date+ID+"_p"+page+extension;});
+								var link = null;elExpand.getAttribute("data-src").replace(/(https?:\/\/.+?\/).+(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+(\.[^\.]+)$/,function(match,domain,date,ID,page,extension,offset,string){link = domain+"img-original/img/"+date+ID+"_p"+page+extension;});
 								//p.ll("save multi-part "+link);
-								if (typeof link !== "undefined"){p.srcA.push(link);}} // .gif gate
+								if (link !== null){p.srcA.push(link);}} // .gif gate
 							this.parent.document.body.removeChild(elSelfIframe); // remove self from parent DOM, special case here since this is always a dead-end iframe
 						p.threadEvent("lo",elSelfIframe);if (p.allPageDoneF && p.threadOpenC === 0){p.end();}};}(p,el));}
 					// this thumbnail is a single
 					else{
 						//http://i4.pixiv.net/c/150x150/img-master/img/2016/03/29/21/33/59/56079447_master1200.jpg
-						var link;elThumbnail.src.replace(/(https?:\/\/.+?\/).+(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+(\.[^\.]+)$/,function(match,domain,date,ID,page,extension,offset,string){link = domain+"img-original/img/"+date+ID+"_p"+page+extension;});
+						var link = null;elThumbnail.src.replace(/(https?:\/\/.+?\/).+(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+(\.[^\.]+)$/,function(match,domain,date,ID,page,extension,offset,string){link = domain+"img-original/img/"+date+ID+"_p"+page+extension;});
 						//p.ll("save single "+link);
-						if (typeof link !== "undefined"){p.srcA.push(link);}}} // .gif gate
+						if (link !== null){p.srcA.push(link);}}} // .gif gate
 				if (elThumbnailA.length === 0){
 					p.allPageDoneF = true;}
 				else{
