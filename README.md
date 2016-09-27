@@ -36,7 +36,7 @@ There are some artists that I follow on Twitter. It seems like those artists upl
 Notes  
 • This script will never delete images. You may accumulate images that the artist has deleted, in which case you will have more images on your computer than are available on pixiv for that artist. This is intended behavior.  
 • The command-line script throttles downloads to four-at-a-time, in stop-go parallel. The stop-go parallel part is just because I don't know how to have rolling parallel, but the four-at-a-time part is out of some bizarre notion of courtesy toward pixiv staff. I may raise the limit in the future, but for now, four-at-a-time seems good enough, while not potentially being a bandwidth hog toward pixiv. There's a chance that pixiv is large enough that a usual at-home person would never be a bother bandwidth-wise, but I don't feel comfortable upping the limiter yet.  
-• A username with forward slash "/" in it will have them all replaced with a backslash "\".  
+• A username with forward slashes "/" or backslashes "\" in it will have them all replaced with a pipe "|". A username with double straight quotes will have them all replaced with two single straight quotes in succession. This is to follow cross- Operating System naming conventions.  
   
 Everything that could go wrong, within reason  
 • The scraper never finishes : There's a chance that pixiv will change their interface enough to break the scraper. I expect something like this eventually, and if you post an "Issue" about it here on GitHub, we can work together to try to fix this scraper.  
