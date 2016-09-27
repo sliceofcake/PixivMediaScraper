@@ -78,8 +78,8 @@
 				resA.push(""
 					+"if test -z $(find \""+dirname+"\" -name \""+fileID+".*\" | head -n 1);then\n"
 					+"if curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" -I "+src+" | grep -q \"404 Not Found\"\n"
-					+"then curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src.replace(".jpg",".png")+" -o "+dirname+"/"+filename.replace(".jpg",".png")+"\n"
-					+"else curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+dirname+"/"+filename+"\n"
+					+"then curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src.replace(".jpg",".png")+" -o \""+dirname+"/"+filename.replace(".jpg",".png")+"\"\n"
+					+"else curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o \""+dirname+"/"+filename+"\"\n"
 					+"fi;fi");
 				//resA.push("curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename);
 				}
