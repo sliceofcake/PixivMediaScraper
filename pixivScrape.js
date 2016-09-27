@@ -3,17 +3,16 @@
 	// pixiv eventually throws in a dummy page, named "http://d.pixiv.org/dummy.html" that I used to think would end my script if adblock was enabled. Seems fine now.
 	// pixiv checks the http referer header, and if it's not set to the correponding opener page, serves a 403 error. Clever, yet not the most wicked thing they could've done.
 	var p = {
-		version : 1,
-		date : "19 Sep 2016",
-		srcA : [],
-		pageI : 1,
-		userID : "",
-		threadOpenA : [],
-		threadOpenC : 0, // inc/dec thread synchronization
-		threadOpenHiC : 0, // for debug output
-		threadOpenLoC : 0, // for debug output
-		el_ad : null,
-		allPageDoneF : false,
+		version    :             2,
+		date       : "26 Sep 2016",
+		dlFilename : "pixivDownloadUpdateScript.txt",
+		el_ad      : null         ,
+		el_ae      : null         ,
+		userIDA    : []           ,
+		userIDAI   :            -1,
+		outFinalS  : ""           ,
+		outCmdSA   : []           ,
+		outMsgSA   : []           ,
 		ll : function(m){console.log(m);},
 		// query selector down
 		qd:function(el,m){
@@ -47,36 +46,46 @@
 				downloadLink.style.display = "none";
 				document.body.appendChild(downloadLink);}
 			downloadLink.click();},
-		end : function(){this.ll("END");
-			var resA = [];
-			var resS = "";
-			// ! currently, we guess what the original links will be to save a lot of execution time. unfortunately, that will always return ".jpg". most of these images ~are~ ".jpg", but some are .png
-			// curl --header "referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id=########" http://i3.pixiv.net/img-original/img/2016/09/02/23/44/10/########_p0.jpg -o out.jpg
-			for (var srcAI = 0,srcAC = this.srcA.length; srcAI < srcAC; srcAI++){src = this.srcA[srcAI]; // src looks like : http://i3.pixiv.net/img-original/img/2016/09/02/23/44/10/########_p0.jpg
-				var ID;src.replace(/\/(\d+)_p/,function(match,p1,offset,string){ID = p1;});
-				var filename;src.replace(/\/([^\/]+)$/,function(match,p1,offset,string){filename = p1;});
-				resA.push("if curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" -I "+src+" | grep -q \"404 Not Found\";"
-					+"then curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src.replace(".jpg",".png")+" -o "+filename.replace(".jpg",".png")+";"
-					+"else curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename+";"
-					+"fi");
-				//resA.push("curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename);
-				}
-			var resAlterA = [];
-			var resAlterS = "";
-			for (var resAI = 0,resAC = resA.length; resAI < resAC; resAI++){var res = resA[resAI];
-				resAlterA.push("("+res+") &");
-				if (resAI%4 === 3 || resAI === resAC-1){resAlterA.push("wait");}}
-			resAlterS = resAlterA.join("\n")+"\necho \"Success. Pixiv download script finished running. Please verify the existence of exactly "+this.srcA.length+" images.\""; // \n for Unix
-			this.ll(resAlterS);
-			this.saveTextAsFile("pixivUser"+this.userID+"CurlScript.txt",resAlterS);},
+		loadFileAsText : function(fileToLoad,fxn){
+			if (fileToLoad === null){fxn("");return;}
+			var fileReader = new FileReader();
+			fileReader.onload = (fileLoadedEvent)=>{
+				var textFromFileLoaded = fileLoadedEvent.target.result;
+				fxn(textFromFileLoaded);};
+			fileReader.readAsText(fileToLoad,"UTF-8");},
 		genIframe : function(body,src){
 			var el = document.createElement("iframe");
 			el.src = src;
 			el.style.visibility = "hidden";
 			body.appendChild(el);
 			return el;},
+		//----
+		end : function(){this.ll("END");
+			var dirname = p.username+"#"+p.userID; // remember to escape double quotes for the final string, should be currently handled for p.username
+			var resA = [];
+			// ! currently, we guess what the original links will be to save a lot of execution time. unfortunately, that will always return ".jpg". most of these images ~are~ ".jpg", but some are .png
+			// curl --header "referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id=########" http://i3.pixiv.net/img-original/img/2016/09/02/23/44/10/########_p0.jpg -o out.jpg
+			for (var srcAI = 0,srcAC = this.srcA.length; srcAI < srcAC; srcAI++){src = this.srcA[srcAI]; // src looks like : http://i3.pixiv.net/img-original/img/2016/09/02/23/44/10/########_p0.jpg
+				var ID;src.replace(/\/(\d+)_p/,function(match,p1,offset,string){ID = p1;});
+				var filename;src.replace(/\/([^\/]+)$/,function(match,p1,offset,string){filename = p1;});
+				var fileID;src.replace(/\/([^\/]+)\.(?:[^\/]+)$/,function(match,p1,offset,string){fileID = p1;});
+				resA.push(""
+					+"if test -z $(find \""+dirname+"\" -name \""+fileID+".*\" | head -n 1);then\n"
+					+"if curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" -I "+src+" | grep -q \"404 Not Found\"\n"
+					+"then curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src.replace(".jpg",".png")+" -o "+dirname+"/"+filename.replace(".jpg",".png")+"\n"
+					+"else curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+dirname+"/"+filename+"\n"
+					+"fi;fi");
+				//resA.push("curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename);
+				}
+			var resAlterA = [];
+			for (var resAI = 0,resAC = resA.length; resAI < resAC; resAI++){var res = resA[resAI];
+				resAlterA.push("("+res+") &");
+				if (resAI%4 === 3 || resAI === resAC-1){resAlterA.push("wait\necho \"artist #"+p.userID+" "+p.username+" -> "+(resAI+1)+"/"+this.srcA.length+"\"");}}
+			this.outCmdSA.push("if ! test -d \""+dirname+"\";then mkdir \""+dirname+"\";fi\n"+resAlterA.join("\n")); // \n for Unix
+			this.outMsgSA.push("echo \"pixiv userID #"+p.userID+" -> Success. Please verify the existence of exactly "+this.srcA.length+" images.\"");
+			this.main();},
 		threadChangeFxn : function(){
-			this.el_ad.innerHTML = p.threadOpenA.join("<br>")+"<br>processing/about-to-process page # "+this.pageI+"<br>pages opened : "+this.threadOpenHiC+"<br>pages closed : "+this.threadOpenLoC+"<br>outstanding : "+this.threadOpenC;},
+			this.el_ad.innerHTML = p.threadOpenA.join("<br>")+"<br>[artist #"+p.userID+(p.username===null?"":" "+p.username)+"] processing/about-to-process page # "+this.pageI+"<br>pages opened : "+this.threadOpenHiC+"<br>pages closed : "+this.threadOpenLoC+"<br>outstanding : "+this.threadOpenC;},
 		threadEvent : function(type,el){
 			switch (type){default:;
 				break;case "hi":p.threadOpenC++;p.threadOpenHiC++;p.threadOpenA.push(el.src);p.threadChangeFxn();
@@ -91,25 +100,65 @@
 			el.style.border = "1px solid black";
 			el.style.zIndex = "9999999";
 			var el_aa = document.createElement("div");
-			el_aa.innerHTML = "<span style=\"font-weight:bold;font-size:120%;\">Pixiv Media Scraper Version "+this.version+" ["+this.date+"]</span><br>Usage instructions: Make sure you are viewing a user's \"作品\">\"総合\" feed. This has only been tested on artists with only still images, such as .png and .jpg files. As of September 2016, this can be found at \"http://www.pixiv.net/member_illust.php?id=[[[USERID_HERE]]]\". Once you have that feed loaded, click the relevant link/button below to start the scraper, which will look for all image links and take note of them in staggered parallel as soon as they are encountered.<br><br>! This scraper will open potentially hundreds of pages in a very short period of time [though it will happen invisibly to you]. Please be considerate of any people that you may be sharing your internet connection with. Also, please be mindful of either the loaded Pixiv pages or your web browser exploding from trying to open so many pages in parallel. This scraper will not download any images, it will only return[download] to you a list of command prompt commands. This is because Pixiv reads the HTTP referer header, and if it's not properly set, Pixiv won't let you view the image. Manually setting the referer header is made very difficult, if not impossible, through modern browsers, for etiquette-related reasons.<br><br>This page has now been messed up from running this script. If you want to browse another Pixiv page, just go ahead and click away. If you want to use ~this~ page, you should probably reload it so that everything is hooked up correctly.<br><br><a href=\"https://github.com/sliceofcake/PixivMediaScraper\">https://github.com/sliceofcake/PixivMediaScraper</a><br><br>If you know how to use a command prompt, then go ahead and navigate to the folder you want to download to, feed in this script's output to your prompt, read it over to make sure it looks okay, and run it. It uses curl to download all the images. If you aren't familiar with a \"command prompt\", then stop by the GitHub page that I mentioned for help.<br><br>If you want to try out file downloads right now so that there isn't a problem at the end of the script, try clicking the relevant link/button below to download three dummy files.<br><br>";
-			var el_ab = document.createElement("button");
-			el_ab.style.display = "block";
-			el_ab.textContent = "click here to download three dummy files";
-			el_ab.addEventListener("click",function(p){return function(){p.saveTextAsFile("dummy1.txt","blahblahblah1");p.saveTextAsFile("dummy2.txt","blahblahblah2");p.saveTextAsFile("dummy3.txt","blahblahblah3");};}(this));
+			el_aa.innerHTML = "<span style=\"font-weight:bold;font-size:120%;\">Pixiv Media Scraper Version "+this.version+" ["+this.date+"]</span><br>(1) Drag&amp;Drop or Browse-Select for userID file below. You'll see an output of the text. Make sure it looks correct -> one pixiv userID per line.<br>(2) Click the download button. Wait for the process to complete, and one file will download.<br>(3) Place that file in your pixiv top-level folder and run that file with \"sh\", like \"sh "+this.dlFilename+"\". Delete<br><br>";
+			
+			var el_af = document.createElement("input");
+			el_af.setAttribute("type","file");
+			el_af.addEventListener("change",(function(p){return function(){
+				p.loadFileAsText(this.files[0],function(txt){
+					p.userIDA = [];
+					var a = txt.split(/\D+/);
+					for (var i = 0; i < a.length; i++){var v = a[i];
+						if (v === ""){continue;}
+						var vInt = parseInt(v);
+						if (isNaN(vInt)){continue;}
+						p.userIDA.push(vInt);}
+					p.el_ae.value = p.userIDA.join("\n");
+				});
+			};})(this));
+			
+			var el_ae = document.createElement("textarea");
+			el_ae.style.display = "block";
+			el_ae.style.height = "100px";
+			this.el_ae = el_ae;
+			
 			var el_ac = document.createElement("button");
 			el_ac.style.display = "block";
-			el_ac.textContent = "click here to find all media links and download one command .txt file";
+			el_ac.style.height = "50px";
+			el_ac.textContent = "generate and download "+this.dlFilename;
 			el_ac.addEventListener("click",function(p){return function(){p.main();};}(this));
+			
 			var el_ad = document.createElement("div");
 			this.el_ad = el_ad;
-			this.threadChangeFxn();
+			
+			var el_ab = document.createElement("button");
+			el_ab.style.display = "block";
+			el_ab.textContent = "click here to download three dummy files to test your browser's downloading configuration";
+			el_ab.addEventListener("click",function(p){return function(){p.saveTextAsFile("dummy1.txt","blahblahblah1");p.saveTextAsFile("dummy2.txt","blahblahblah2");p.saveTextAsFile("dummy3.txt","blahblahblah3");};}(this));
+			
 			el.appendChild(el_aa);
-			el.appendChild(el_ab);
+			el.appendChild(el_af);
+			el.appendChild(el_ae);
 			el.appendChild(el_ac);
 			el.appendChild(el_ad);
+			el.appendChild(el_ab);
 			document.body.appendChild(el);},
 		main : function(){
-			window.location.href.replace(/(?:&|\?)id=(.+?)(?:&|$)/,function(match,p1,offset,string){p.userID = p1;});
+			this.userIDAI++;
+			// if [obvious] then done
+			if (this.userIDAI >= this.userIDA.length){
+				this.outFinalS = this.outCmdSA.join("\n")+"\n"+this.outMsgSA.join("\n")+"\n"+"rm "+this.dlFilename;
+				this.saveTextAsFile(this.dlFilename,this.outFinalS);
+				return;}
+			this.srcA          = []   ;
+			this.pageI         =     1;
+			this.userID        = this.userIDA[this.userIDAI];
+			this.username      = null ;
+			this.threadOpenA   = []   ;
+			this.threadOpenC   =     0; // inc/dec thread synchronization
+			this.threadOpenHiC =     0; // for debug output
+			this.threadOpenLoC =     0; // for debug output
+			this.allPageDoneF  = false;
 			this.cycle1();},
 		// each run of cycle processes one page
 		cycle1 : function(){
@@ -119,6 +168,8 @@
 			// foreach page, load based off pre-known link format
 			var el = this.genIframe(document.body,"http://www.pixiv.net/member_illust.php?id="+p.userID+"&type=all&p="+this.pageI);
 			p.threadEvent("hi",el);el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe,pageI){return function(){
+				// get username
+				if (p.username === null){p.username = this.document.body.querySelector(".user").textContent.replace("\\","\\\\").replace("\"","\\\"");}
 				// foreach µ.qd(".thumbnail")
 				var elThumbnailA = p.qdA(this.document.body,"._thumbnail");
 				for (var elThumbnailAI = 0,elThumbnailAC = elThumbnailA.length; elThumbnailAI < elThumbnailAC; elThumbnailAI++){var elThumbnail = elThumbnailA[elThumbnailAI];
