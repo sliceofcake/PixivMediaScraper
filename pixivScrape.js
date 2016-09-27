@@ -14,6 +14,10 @@
 		outCmdSA   : []           ,
 		outMsgSA   : []           ,
 		ll : function(m){console.log(m);},
+		escFil : function(m){
+			if (typeof m !== "string"){m = m.toString();}
+			var s = m;
+			return s.replace(/\\/g,"|").replace(/"/g,"''").replace(/\//g,"|");},
 		// query selector down
 		qd:function(el,m){
 			if (typeof m === "undefined"){m = el;el = document.body;} // alternate use
@@ -76,19 +80,19 @@
 				var filename;src.replace(/\/([^\/]+)$/,function(match,p1,offset,string){filename = p1;});
 				var fileID;src.replace(/\/([^\/]+)\.(?:[^\/]+)$/,function(match,p1,offset,string){fileID = p1;});
 				resA.push(""
-					+"if test -z $(find \""+dirname+"\" -name \""+fileID+".*\" | head -n 1);then\n"
-					+"if curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" -I "+src+" | grep -q \"404 Not Found\"\n"
-					+"then curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src.replace(".jpg",".png")+" -o \""+dirname+"/"+filename.replace(".jpg",".png")+"\"\n"
-					+"else curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o \""+dirname+"/"+filename+"\"\n"
+					+"if test -z $(find \""+p.escFil(dirname)+"\" -name \""+p.escFil(fileID)+".*\" | head -n 1);then\n"
+					+"if curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+p.escFil(ID)+"\" -I \""+p.escFil(src)+"\" | grep -q \"404 Not Found\"\n"
+					+"then curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+p.escFil(ID)+"\" \""+p.escFil(src.replace(".jpg",".png"))+"\" -o \""+p.escFil(dirname+"/"+filename.replace(".jpg",".png"))+"\"\n"
+					+"else curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+p.escFil(ID)+"\" \""+p.escFil(src)+"\" -o \""+p.escFil(dirname+"/"+filename)+"\"\n"
 					+"fi;fi");
 				//resA.push("curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename);
 				}
 			var resAlterA = [];
 			for (var resAI = 0,resAC = resA.length; resAI < resAC; resAI++){var res = resA[resAI];
 				resAlterA.push("("+res+") &");
-				if (resAI%4 === 3 || resAI === resAC-1){resAlterA.push("wait\necho \"artist #"+p.userID+" "+p.username+" -> "+(resAI+1)+"/"+this.srcA.length+"\"");}}
-			this.outCmdSA.push("if ! test -d \""+dirname+"\";then mkdir \""+dirname+"\";fi\n"+resAlterA.join("\n")); // \n for Unix
-			this.outMsgSA.push("echo \"pixiv userID #"+p.userID+" -> Success. Please verify the existence of exactly "+this.srcA.length+" images.\"");
+				if (resAI%8 === (8-1) || resAI === resAC-1){resAlterA.push("wait\necho \"artist #"+p.escFil(p.userID)+" "+p.escFil(p.username)+" -> "+p.escFil(resAI+1)+"/"+p.escFil(this.srcA.length)+"\"");}}
+			this.outCmdSA.push("if ! test -d \""+p.escFil(dirname)+"\";then mkdir \""+p.escFil(dirname)+"\";fi\n"+resAlterA.join("\n")); // \n for Unix
+			this.outMsgSA.push("echo \"pixiv userID #"+p.escFil(p.userID)+" -> Success. Please verify the existence of exactly "+p.escFil(this.srcA.length)+" images.\"");
 			p.removeIframeAll();
 			this.main();},
 		threadChangeFxn : function(){
@@ -183,7 +187,7 @@
 			var el = this.genIframe(document.body,"http://www.pixiv.net/member_illust.php?id="+p.userID+"&type=all&p="+this.pageI);
 			p.threadEvent("hi",el);el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe,pageI){return function(){
 				// get username
-				if (p.username === null){p.username = this.document.body.querySelector(".user").textContent.replace("\\","\\\\").replace("\"","\\\"");}
+				if (p.username === null){p.username = this.document.body.querySelector(".user").textContent;}
 				// foreach µ.qd(".thumbnail")
 				var elThumbnailA = p.qdA(this.document.body,"._thumbnail");
 				for (var elThumbnailAI = 0,elThumbnailAC = elThumbnailA.length; elThumbnailAI < elThumbnailAC; elThumbnailAI++){var elThumbnail = elThumbnailA[elThumbnailAI];
