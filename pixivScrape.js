@@ -57,8 +57,14 @@
 			var el = document.createElement("iframe");
 			el.src = src;
 			el.style.visibility = "hidden";
+			el.className = "sliceofstrawberrycake";
 			body.appendChild(el);
 			return el;},
+		removeIframeAll : function(){
+			// remove all iframes for this user
+			var elA = this.qdA(".sliceofstrawberrycake");
+			for (var elAI = 0,elAC = elA.length;elAI < elAC; elAI++){el = elA[elAI];
+				el.parentNode.removeChild(el);}},
 		//----
 		end : function(){this.ll("END");
 			var dirname = p.username+"#"+p.userID; // remember to escape double quotes for the final string, should be currently handled for p.username
@@ -66,7 +72,7 @@
 			// ! currently, we guess what the original links will be to save a lot of execution time. unfortunately, that will always return ".jpg". most of these images ~are~ ".jpg", but some are .png
 			// curl --header "referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id=########" http://i3.pixiv.net/img-original/img/2016/09/02/23/44/10/########_p0.jpg -o out.jpg
 			for (var srcAI = 0,srcAC = this.srcA.length; srcAI < srcAC; srcAI++){src = this.srcA[srcAI]; // src looks like : http://i3.pixiv.net/img-original/img/2016/09/02/23/44/10/########_p0.jpg
-				var ID;src.replace(/\/(\d+)_p/,function(match,p1,offset,string){ID = p1;});
+				/*error:cannot read replace of undefined*/var ID;src.replace(/\/(\d+)_p/,function(match,p1,offset,string){ID = p1;});
 				var filename;src.replace(/\/([^\/]+)$/,function(match,p1,offset,string){filename = p1;});
 				var fileID;src.replace(/\/([^\/]+)\.(?:[^\/]+)$/,function(match,p1,offset,string){fileID = p1;});
 				resA.push(""
@@ -83,6 +89,7 @@
 				if (resAI%4 === 3 || resAI === resAC-1){resAlterA.push("wait\necho \"artist #"+p.userID+" "+p.username+" -> "+(resAI+1)+"/"+this.srcA.length+"\"");}}
 			this.outCmdSA.push("if ! test -d \""+dirname+"\";then mkdir \""+dirname+"\";fi\n"+resAlterA.join("\n")); // \n for Unix
 			this.outMsgSA.push("echo \"pixiv userID #"+p.userID+" -> Success. Please verify the existence of exactly "+this.srcA.length+" images.\"");
+			p.removeIframeAll();
 			this.main();},
 		threadChangeFxn : function(){
 			this.el_ad.innerHTML = p.threadOpenA.join("<br>")+"<br>[artist #"+p.userID+(p.username===null?"":" "+p.username)+"] processing/about-to-process page # "+this.pageI+"<br>pages opened : "+this.threadOpenHiC+"<br>pages closed : "+this.threadOpenLoC+"<br>outstanding : "+this.threadOpenC;},
@@ -106,20 +113,26 @@
 			el_af.setAttribute("type","file");
 			el_af.addEventListener("change",(function(p){return function(){
 				p.loadFileAsText(this.files[0],function(txt){
-					p.userIDA = [];
-					var a = txt.split(/\D+/);
-					for (var i = 0; i < a.length; i++){var v = a[i];
-						if (v === ""){continue;}
-						var vInt = parseInt(v);
-						if (isNaN(vInt)){continue;}
-						p.userIDA.push(vInt);}
-					p.el_ae.value = p.userIDA.join("\n");
+					p.el_ae.value = txt;
+					p.el_ae.KERN.onchangeFxn.call(p.el_ae);
 				});
 			};})(this));
 			
 			var el_ae = document.createElement("textarea");
 			el_ae.style.display = "block";
 			el_ae.style.height = "100px";
+			el_ae.KERN = {};
+			el_ae.KERN.onchangeFxn = (function(p){return function(){
+				p.userIDA = [];
+				var a = this.value.split(/\D+/);
+				for (var i = 0; i < a.length; i++){var v = a[i];
+					if (v === ""){continue;}
+					var vInt = parseInt(v);
+					if (isNaN(vInt)){continue;}
+					p.userIDA.push(vInt);}
+				p.userIDA.join("\n");
+			};})(this);
+			el_ae.addEventListener("input",el_ae.KERN.onchangeFxn);
 			this.el_ae = el_ae;
 			
 			var el_ac = document.createElement("button");
@@ -162,9 +175,10 @@
 			this.cycle1();},
 		// each run of cycle processes one page
 		cycle1 : function(){
-			// put some delay on the next page, so that the browser isn't multitasking too much
-			if (p.threadOpenC > 4){ // if more than 4 open threads [arbitrary number]
-				setTimeout(function(p){return function(){p.cycle1();};}(p),1000);return;}
+			// delay the next page until the previous page has completed
+			if (p.threadOpenC > 0){
+				setTimeout(function(p){return function(){p.cycle1();};}(p),100);return;}
+			p.removeIframeAll();
 			// foreach page, load based off pre-known link format
 			var el = this.genIframe(document.body,"http://www.pixiv.net/member_illust.php?id="+p.userID+"&type=all&p="+this.pageI);
 			p.threadEvent("hi",el);el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe,pageI){return function(){
@@ -182,15 +196,16 @@
 							var elExpandA = p.qdA(this.document.body,".image");
 							for (var elExpandAI = 0,elExpandAC = elExpandA.length; elExpandAI < elExpandAC; elExpandAI++){var elExpand = elExpandA[elExpandAI];
 								var link;elExpand.getAttribute("data-src").replace(/(https?:\/\/.+?\/).+(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+(\.[^\.]+)$/,function(match,domain,date,ID,page,extension,offset,string){link = domain+"img-original/img/"+date+ID+"_p"+page+extension;});
-								p.ll("save multi-part "+link);
-								p.srcA.push(link);}
+								//p.ll("save multi-part "+link);
+								if (typeof link !== "undefined"){p.srcA.push(link);}} // .gif gate
 							this.parent.document.body.removeChild(elSelfIframe); // remove self from parent DOM, special case here since this is always a dead-end iframe
 						p.threadEvent("lo",elSelfIframe);if (p.allPageDoneF && p.threadOpenC === 0){p.end();}};}(p,el));}
 					// this thumbnail is a single
 					else{
+						//http://i4.pixiv.net/c/150x150/img-master/img/2016/03/29/21/33/59/56079447_master1200.jpg
 						var link;elThumbnail.src.replace(/(https?:\/\/.+?\/).+(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+(\.[^\.]+)$/,function(match,domain,date,ID,page,extension,offset,string){link = domain+"img-original/img/"+date+ID+"_p"+page+extension;});
-						p.ll("save single "+link);
-						p.srcA.push(link);}}
+						//p.ll("save single "+link);
+						if (typeof link !== "undefined"){p.srcA.push(link);}}} // .gif gate
 				if (elThumbnailA.length === 0){
 					p.allPageDoneF = true;}
 				else{
