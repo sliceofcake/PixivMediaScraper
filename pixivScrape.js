@@ -80,7 +80,7 @@
 				var filename;src.replace(/\/([^\/]+)$/,function(match,p1,offset,string){filename = p1;});
 				var fileID;src.replace(/\/([^\/]+)\.(?:[^\/]+)$/,function(match,p1,offset,string){fileID = p1;});
 				resA.push(""
-					+"if test -z $(find \""+p.escFil(dirname)+"\" -name \""+p.escFil(fileID)+".*\" | head -n 1);then\n"
+					+"if test -z \"$(find \""+p.escFil(dirname)+"\" -name \""+p.escFil(fileID)+".*\" | head -n 1)\";then\n"
 					+"if curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+p.escFil(ID)+"\" -I \""+src+"\" | grep -q \"404 Not Found\"\n"
 					+"then curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+p.escFil(ID)+"\" \""+src.replace(".jpg",".png")+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename.replace(".jpg",".png"))+"\"\n"
 					+"else curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+p.escFil(ID)+"\" \""+src+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename)+"\"\n"
