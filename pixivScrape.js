@@ -3,8 +3,8 @@
 	// pixiv eventually throws in a dummy page, named "http://d.pixiv.org/dummy.html" that I used to think would end my script if adblock was enabled. Seems fine now.
 	// pixiv checks the http referer header, and if it's not set to the correponding opener page, serves a 403 error. Clever, yet not the most wicked thing they could've done.
 	var p = {
-		version    :             2,
-		date       : "26 Sep 2016",
+		version    :             3,
+		date       : "6 Oct 2016",
 		dlFilename : "pixivDownloadUpdateScript.txt",
 		el_ad      : null         ,
 		el_ae      : null         ,
@@ -128,13 +128,14 @@
 			el_ae.KERN = {};
 			el_ae.KERN.onchangeFxn = (function(p){return function(){
 				p.userIDA = [];
-				var a = this.value.split(/\D+/);
+				var a = this.value.replace(/\/\/.*$/gm,function(match,offset,string){return "";});
+				var a = a.split(/\D+/);
 				for (var i = 0; i < a.length; i++){var v = a[i];
 					if (v === ""){continue;}
 					var vInt = parseInt(v);
 					if (isNaN(vInt)){continue;}
 					p.userIDA.push(vInt);}
-				p.userIDA.join("\n");
+				this.value = p.userIDA.join("\n");
 			};})(this);
 			el_ae.addEventListener("input",el_ae.KERN.onchangeFxn);
 			this.el_ae = el_ae;
