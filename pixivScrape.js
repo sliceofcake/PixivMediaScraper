@@ -4,7 +4,7 @@
 	// pixiv checks the http referer header, and if it's not set to the correponding opener page, serves a 403 error. Clever, yet not the most wicked thing they could've done.
 	var p = {
 		version    :             3,
-		date       : "6 Oct 2016",
+		date       :  "6 Oct 2016",
 		dlFilename : "pixivDownloadUpdateScript.txt",
 		el_ad      : null         ,
 		el_ae      : null         ,
