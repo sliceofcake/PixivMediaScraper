@@ -18,7 +18,10 @@
 		escFil : function(m){
 			if (typeof m !== "string"){m = m.toString();}
 			var s = m;
-			return s.replace(/\\/g,"＼").replace(/\//g,"／").replace(/"/g,"”").replace(/'/g,"’").replace(/\*/g,"＊").replace(/\$/g,"＄").replace(/\./g,"。");},
+			// dots are only useful for path traversal if nearby slashes, which we get rid of, so they should only be dangerous by themselves
+			if (s === "."){return "。";}
+			if (s === ".."){return "。。";}
+			return s.replace(/\\/g,"＼").replace(/\//g,"／").replace(/"/g,"”").replace(/'/g,"’").replace(/\*/g,"＊").replace(/\$/g,"＄");},
 		// escape a pathname [sounds bad, but I really don't have a guarantee that this is enough]
 		escPth : function(m){
 			if (typeof m !== "string"){m = m.toString();}
