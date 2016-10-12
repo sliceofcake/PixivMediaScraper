@@ -41,7 +41,7 @@ Notes
 / -> ／ [path character in UNIX]  
 " -> ” [string scoping]  
 ' -> ’ [string scoping]  
-* -> ＊ [wildcard]  
+\* -> ＊ [wildcard]  
 $ -> ＄ [variable reference]  
 . -> 。 [path navigation]  
 I have a bad feeling this may not cover every case. I hope that this is a good attempt at preventing pixiv usernames from doing anything unexpected in the shell script. I never use "rm" in the script. I use "rmdir" in a vanilla fashion, which should only ever remove empty directories. I use "mv" to move files when a user's username changes, but there should be enough logic going into that to prevent an accidentally catastrophic "mv".  
