@@ -43,7 +43,7 @@ Notes
 ' -> ’ [string scoping]  
 \* -> ＊ [wildcard]  
 $ -> ＄ [variable reference]  
-. -> 。 [path navigation]  
+. -> 。 (only in some rare cases) [path navigation]  
 I have a bad feeling this may not cover every case. I hope that this is a good attempt at preventing pixiv usernames from doing anything unexpected in the shell script. I never use "rm" in the script. I use "rmdir" in a vanilla fashion, which should only ever remove empty directories. I use "mv" to move files when a user's username changes, but there should be enough logic going into that to prevent an accidentally catastrophic "mv".  
 • Wherever you have two forward slashes together in your userID text file, those slashes and everything after them until the end of the line will be ignored by the parser. For example, the following line can be in your userID text file:  
 "  
