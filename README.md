@@ -36,7 +36,15 @@ There are some artists that I follow on Twitter. It seems like those artists upl
 Notes  
 • This script will never delete images. You may accumulate images that the artist has deleted, in which case you will have more images on your computer than are available on pixiv for that artist. This is intended behavior.  
 • The command-line script throttles downloads to eight-at-a-time, in stop-go parallel. The stop-go parallel part is just because I don't know how to have rolling parallel, but the eight-at-a-time part is out of some bizarre notion of courtesy toward pixiv staff. I may raise the limit in the future, but for now, eight-at-a-time seems good enough, while not potentially being a bandwidth hog toward pixiv. There's a chance that pixiv is large enough that a usual at-home person would never be a bother bandwidth-wise, but I don't feel comfortable upping the limiter yet.  
-• A username with forward slashes "/" or backslashes "\" in it will have them all replaced with a pipe "|". A username with double straight quotes will have them all replaced with two single straight quotes in succession. This is to follow cross- Operating System naming conventions.  
+• These pixiv artist just seem to love throwing all sorts of characters into their usernames. It turns out that the shell environment is rather hostile to user input sanitization. To keep everyone happy, the following replacements are executed on usernames:  
+\ -> ＼ [path character in Windows]  
+/ -> ／ [path character in UNIX]  
+" -> ” [string scoping]  
+' -> ’ [string scoping]  
+* -> ＊ [wildcard]  
+$ -> ＄ [variable reference]  
+. -> 。 [path navigation]  
+I have a bad feeling this may not cover every case. I hope that this is a good attempt at preventing pixiv usernames from doing anything unexpected in the shell script. I never use "rm" in the script. I use "rmdir" in a vanilla fashion, which should only ever remove empty directories. I use "mv" to move files when a user's username changes, but there should be enough logic going into that to prevent an accidentally catastrophic "mv".  
 • Wherever you have two forward slashes together in your userID text file, those slashes and everything after them until the end of the line will be ignored by the parser. For example, the following line can be in your userID text file:  
 "  
 299299 // @ekureea on twitter  

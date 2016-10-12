@@ -14,10 +14,16 @@
 		outCmdSA   : []           ,
 		outMsgSA   : []           ,
 		ll : function(m){console.log(m);},
+		// escape a filename [sounds bad, but I really don't have a guarantee that this is enough]
 		escFil : function(m){
 			if (typeof m !== "string"){m = m.toString();}
 			var s = m;
-			return s.replace(/\\/g,"|").replace(/"/g,"''").replace(/\//g,"|");},
+			return s.replace(/\\/g,"＼").replace(/\//g,"／").replace(/"/g,"”").replace(/'/g,"’").replace(/\*/g,"＊").replace(/\$/g,"＄").replace(/\./g,"。");},
+		// escape a pathname [sounds bad, but I really don't have a guarantee that this is enough]
+		escPth : function(m){
+			if (typeof m !== "string"){m = m.toString();}
+			var s = m;
+			return s.replace(/\"/g,"\"");},
 		// query selector down
 		qd:function(el,m){
 			if (typeof m === "undefined"){m = el;el = document.body;} // alternate use
@@ -71,7 +77,8 @@
 				el.parentNode.removeChild(el);}},
 		//----
 		end : function(){this.ll("END");
-			var dirname = p.username+"#"+p.userID; // remember to escape double quotes for the final string, should be currently handled for p.username
+			var dirnameBase = "#"+p.userID;
+			var dirname = p.username+dirnameBase; // remember to escape double quotes for the final string, should be currently handled for p.username
 			var resA = [];
 			// ! currently, we guess what the original links will be to save a lot of execution time. unfortunately, that will always return ".jpg". most of these images ~are~ ".jpg", but some are .png
 			// curl --header "referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id=########" http://i3.pixiv.net/img-original/img/2016/09/02/23/44/10/########_p0.jpg -o out.jpg
@@ -80,10 +87,10 @@
 				var filename;src.replace(/\/([^\/]+)$/,function(match,p1,offset,string){filename = p1;});
 				var fileID;src.replace(/\/([^\/]+)\.(?:[^\/]+)$/,function(match,p1,offset,string){fileID = p1;});
 				resA.push(""
-					+"if test -z \"$(find \""+p.escFil(dirname)+"\" -name \""+p.escFil(fileID)+".*\" | head -n 1)\";then\n"
-					+"if curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+p.escFil(ID)+"\" -I \""+src+"\" | grep -q \"404 Not Found\"\n"
-					+"then curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+p.escFil(ID)+"\" \""+src.replace(".jpg",".png")+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename.replace(".jpg",".png"))+"\"\n"
-					+"else curl -s --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+p.escFil(ID)+"\" \""+src+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename)+"\"\n"
+					+"if test -z \"$(find \""+p.escFil(dirname)+"\" -name \""+p.escFil(fileID)+".*\" -maxdepth 1 | head -c 1)\";then\n"
+						+"if curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" -I \""+p.escPth(src)+"\" | grep -q \""+p.escFil("404 Not Found")+"\"\n"
+							+"then curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" \""+p.escPth(src.replace(".jpg",".png"))+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename.replace(".jpg",".png"))+"\"\n"
+							+"else curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" \""+p.escPth(src)+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename)+"\"\n"
 					+"fi;fi");
 				//resA.push("curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename);
 				}
@@ -91,7 +98,22 @@
 			for (var resAI = 0,resAC = resA.length; resAI < resAC; resAI++){var res = resA[resAI];
 				resAlterA.push("("+res+") &");
 				if (resAI%8 === (8-1) || resAI === resAC-1){resAlterA.push("wait\necho \"artist #"+p.escFil(p.userID)+" "+p.escFil(p.username)+" -> "+p.escFil(resAI+1)+"/"+p.escFil(this.srcA.length)+"\"");}}
-			this.outCmdSA.push("if ! test -d \""+p.escFil(dirname)+"\";then mkdir \""+p.escFil(dirname)+"\";fi\n"+resAlterA.join("\n")); // \n for Unix
+			this.outCmdSA.push(""
+				// if we can't find the exact directoryname, then create it
+				+"if ! test -d \""+p.escFil(dirname)+"\";then\n"
+					+"mkdir \""+p.escFil(dirname)+"\"\n"
+				+"fi\n"
+				// merge any incorrectly named directories
+				// previous used: [[[-not -name \""+p.escFil(dirname)+"\"]]] in the dirname find line, but it doesn't seem to handle encodings as well as [[[test -ef]]]
+				+"find . -name \"*"+p.escFil(dirnameBase)+"\" -maxdepth 1 | while read dirname;do\n"
+					+"if ! test \"$dirname\" -ef \""+p.escFil(dirname)+"/\";then\n"
+						+"find \"$dirname\" -type f | while read filname;do\n"
+							+"mv \"$filname\" \""+p.escFil(dirname)+"/\"\n"
+						+"done\n"
+						+"rmdir \"$dirname\"\n" // this is safe -> rmdir used like this will only remove an already-empty directory
+					+"fi\n"
+				+"done\n"
+				+resAlterA.join("\n")); // \n for Unix
 			this.outMsgSA.push("echo \"pixiv userID #"+p.escFil(p.userID)+" -> Success. Please verify the existence of exactly "+p.escFil(this.srcA.length)+" images.\"");
 			p.removeIframeAll();
 			this.main();},
@@ -188,7 +210,7 @@
 			var el = this.genIframe(document.body,"http://www.pixiv.net/member_illust.php?id="+p.userID+"&type=all&p="+this.pageI);
 			p.threadEvent("hi",el);el.contentWindow.addEventListener("DOMContentLoaded",function(p,elSelfIframe,pageI){return function(){
 				// get username
-				if (p.username === null){p.username = this.document.body.querySelector(".user").textContent;}
+				if (p.username === null){p.username = this.document.body.querySelector(".user").textContent;} // ! test : p.username = "@\"*$file";
 				// foreach µ.qd(".thumbnail")
 				var elThumbnailA = p.qdA(this.document.body,"._thumbnail");
 				for (var elThumbnailAI = 0,elThumbnailAC = elThumbnailA.length; elThumbnailAI < elThumbnailAC; elThumbnailAI++){var elThumbnail = elThumbnailA[elThumbnailAI];
