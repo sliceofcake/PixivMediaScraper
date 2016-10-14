@@ -91,9 +91,14 @@
 				var fileID;src.replace(/\/([^\/]+)\.(?:[^\/]+)$/,function(match,p1,offset,string){fileID = p1;});
 				resA.push(""
 					+"if test -z \"$(find \""+p.escFil(dirname)+"\" -name \""+p.escFil(fileID)+".*\" -maxdepth 1 | head -c 1)\";then\n"
-						+"if curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" -I \""+p.escPth(src)+"\" | grep -q \""+p.escFil("404 Not Found")+"\"\n"
-							+"then curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" \""+p.escPth(src.replace(".jpg",".png"))+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename.replace(".jpg",".png"))+"\"\n"
-							+"else curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" \""+p.escPth(src)+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename)+"\"\n"
+						+  "if ! (curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" -I \""+p.escPth(src                       )+"\" | grep -q \""+p.escFil("404 Not Found")+"\");then\n"
+							+    "curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" \""   +p.escPth(src                       )+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename                       )+"\"\n"
+						+"elif ! (curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" -I \""+p.escPth(src.replace(".jpg",".png"))+"\" | grep -q \""+p.escFil("404 Not Found")+"\");then\n"
+							+    "curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" \""   +p.escPth(src.replace(".jpg",".png"))+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename.replace(".jpg",".png"))+"\"\n"
+						+"elif ! (curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" -I \""+p.escPth(src.replace(".jpg",".gif"))+"\" | grep -q \""+p.escFil("404 Not Found")+"\");then\n"
+							+    "curl -s --header \"referer: "+p.escPth("http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID)+"\" \""   +p.escPth(src.replace(".jpg",".gif"))+"\" -o \""+p.escFil(dirname)+"/"+p.escFil(filename.replace(".jpg",".gif"))+"\"\n"
+						+"else\n"
+							+"echo \"Failed to match : "+p.escFil(filename)+"\"\n"
 					+"fi;fi");
 				//resA.push("curl --header \"referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+ID+"\" "+src+" -o "+filename);
 				}
