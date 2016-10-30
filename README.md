@@ -1,41 +1,42 @@
 # PixivMediaScraper  
-Keeps a local folder tree of your favorite pixiv artists' works, quickly gets newly posted works [with a little manual labor].
+Keeps a local folder tree of your favorite pixiv artists' works, quickly gets newly posted works. It's a Python script.  
   
 Required:  
-L> Web browser  
-L> Access to [pixiv.net](pixiv.net)  
 L> A pixiv account  
 L> One of the following:  
-L> L> Apple OS and ability to use the command-line [link to instructions provided]  
+L> L> Apple OS [comes with python installed] and ability to use the command-line [link to instructions provided]  
 L> L> [PENDING] Windows and ability to use the command-line [link to instructions provided]  
   
+Recommended:  
+L> A web browser - in case you need to resolve any login issues [pixiv may occasionally ask you to complete a captcha, which you can only do on their actual login page through a web browser]  
+  
 Personal walkthrough  
-On my computer, I have a folder named "pixivRoot". Inside are two folders and one text file. The folders are named "杏仁無双#161519" and "上倉エク#299299", and they contain all of those artists' works that they've posted to pixiv. The text file has two lines and looks like this:  
-"  
+On my computer, I have a folder named `pixivRoot`. Inside are two folders and two text files. The folders were automatically generated and are named `杏仁無双#161519` and `上倉エク#299299`. They contain all of those artists' works that they've posted to pixiv. The login.txt text file has two lines, and I'm not going to show it to you because it has my email and password in it. It looks sort of like this, though:  
+```  
+sliceofcake@example.com  
+secretstrawberrycake  
+```  
+This software needs that information because you can't scrape pixiv without an account. If you don't feel comfortable putting your email and password in a text file like this, just make a new account that you use only with this software. The userIDA.txt text file has two lines and looks like this:  
+```  
 161519  
 299299  
-"  
-Those are the pixiv userIDs of those two artists. If I find a new artist that I like, I'll add their pixiv userID to this list on another line. Finding pixiv userIDs is easy, it's the number in the URL of their profile/works page, such as "http://www.pixiv.net/member_illust.php?id=161519" being a pixiv userID of 161519. Every day or so, I'll open pixiv, load up my JavaScript script, run it, and use the generated command script to keep my pixiv folder updated. I can then look at the "Date Modified" dates for the folders and files to see which artists have posted new works.  
+```  
+Those are the pixiv userIDs of those two artists. If I find a new artist that I like, I'll add their pixiv userID to this list on a new line. I keep them in order to make it easy for me to add to and remove from the list. Finding pixiv userIDs for artists is easy: it's the number in the URL of their profile/works page, such as `http://www.pixiv.net/member_illust.php?id=161519` being a pixiv userID of `161519`. Every day, I'll open up Terminal, navigate to my pixivRoot folder and run pixivRoot.py to keep my pixiv folder updated. I can then look at the "Date Modified" dates for the folders and files to see which artists have posted new works. Occasionally, I'll use my pixivRoot folder with an image viewing application to randomly view images that I've downloaded.  
+  
+[for the next section, you may want to look at the Command-Line Help section of [https://github.com/sliceofcake/TechnicalHelp](https://github.com/sliceofcake/TechnicalHelp)]  
   
 Downloading the images  
-(1) Navigate anywhere on pixiv.net and be signed in.  
-(2) Open your browser's JavaScript Console for that page.  
-(3) Paste in the text from pixivScrape.js and run it. You will see a large description box placed at the bottom of the page. Follow the instructions written there, which go something like "drag&drop your pixiv userID file on the Choose File button, verify that the contents are correct, then hit the download button".  
-(4 [Apple OS command-line w/sh]) After the scraper is done, it will download a .txt file that has a bunch of command-line commands in it. Move this file to your pixiv root/home folder, which is the folder that will contain all the subfolders for each artist. Navigate to that folder from the command-line and run  
-sh pixivDownloadUpdateScript.txt  
-Doing this will run those commands in that pixiv root/home folder that you should be in. Now just wait and watch the script progress. When it's done, all your images should be in that folder. If you already have most of the images downloaded from previous runs, the download process should be quick.  
-(4 [Windows command-line]) [PENDING\]  
-(5) Notice that the script that you downloaded deleted itself when it finished. That script only corresponds to a file list at the time of running. When you update your pixiv folder in the future, you'll need to re-run the JavaScript code each time.  
-  
-[see the JavaScript Console Help section of [https://github.com/sliceofcake/TechnicalHelp](https://github.com/sliceofcake/TechnicalHelp)]  
-[see the Command-Line Help section of [https://github.com/sliceofcake/TechnicalHelp](https://github.com/sliceofcake/TechnicalHelp)]  
+(1) Open your command line interface application [called Terminal in Apple OSs].  
+(2) Navigate to your pixivRoot folder [you don't have to name it that].  
+(3 [Apple command-line]) Run pixivRoot.py. The recommended configuration is `python pixivRoot.py --disable-subpage`. Now just wait and watch the script progress [or walk away and do other things while it runs]. When it's done, all your images should be in that pixivRoot folder. If you already have most of the images downloaded from previous runs, the download process should be quick. The first time you run it, it could take a very long time, since it'll have to download all the images.  
+(3 [Windows command-line]) [PENDING\]  
   
 Use case  
-There are some artists that I follow on Twitter. It seems like those artists upload about the same set of images to pixiv at roughly the same time [though sometimes one platform will be missing certain works, whether by the artist's intention or accident]. Pixiv images tend to be of higher quality than ones on Twitter. Pixiv, however, requires even more clicks than Twitter does to reach the "original"-resolution images to download, and has a strange system that won't let you just hop to the final link to download it directly [they look at the HTTP referer header, which is spoofable]. I like these artists, I like their art, but I don't want to sit there for hours jumping through Pixiv's interface hoops to get the artist's images. I made this scraper to automate the difficult part of the "download all images by this artist" process.  
+I enjoy seeing the art of many pixiv artists, but I'd like their images on my computer, so I can view them quickly and feed them into fancy image viewer software. I can download pixiv art on my own with my web browser, but it's an extremely slow process, and keeping my folders updated manually would take way too much time out of my days.  
   
 Notes  
 • This script will never delete images. You may accumulate images that the artist has deleted, in which case you will have more images on your computer than are available on pixiv for that artist. This is intended behavior.  
-• The command-line script throttles downloads to eight-at-a-time, in stop-go parallel. The stop-go parallel part is just because I don't know how to have rolling parallel, but the eight-at-a-time part is out of some bizarre notion of courtesy toward pixiv staff. I may raise the limit in the future, but for now, eight-at-a-time seems good enough, while not potentially being a bandwidth hog toward pixiv. There's a chance that pixiv is large enough that a usual at-home person would never be a bother bandwidth-wise, but I don't feel comfortable upping the limiter yet.  
+• This software throttles network requests for two reasons: your network connection may not perform well under high stress and pixiv may not appreciate you making such requests. Everyone has different circumstances though, so I let you decide, within some boundaries, how many simultaneous request-threads you want to support [through command-line option flags].  
 • These pixiv artist just seem to love throwing all sorts of characters into their usernames. It turns out that the shell environment is rather hostile to user input sanitization. To keep everyone happy, the following replacements are executed on usernames:  
 \ -> ＼ [path character in Windows]  
 / -> ／ [path character in UNIX]  
@@ -43,13 +44,35 @@ Notes
 ' -> ’ [string scoping]  
 \* -> ＊ [wildcard]  
 $ -> ＄ [variable reference]  
-. -> 。 (only in some rare cases) [path navigation]  
-I have a bad feeling this may not cover every case. I hope that this is a good attempt at preventing pixiv usernames from doing anything unexpected in the shell script. I never use "rm" in the script. I use "rmdir" in a vanilla fashion, which should only ever remove empty directories. I use "mv" to move files when a user's username changes, but there should be enough logic going into that to prevent an accidentally catastrophic "mv".  
+. -> 。 (only in cases of lone "." and lone "..") [path navigation]  
+I have a bad feeling this may not cover every case. I hope that this is a good attempt at preventing pixiv usernames from doing anything unexpected.  
 • Wherever you have two forward slashes together in your userID text file, those slashes and everything after them until the end of the line will be ignored by the parser. For example, the following line can be in your userID text file:  
-"  
+```  
 299299 // @ekureea on twitter  
-"  
-and you won't have to worry about the parser accidentally extracting an unintended userID from the part that you intended to just be a note/comment for yourself. This mainly becomes an issue when you have numbers in your notes/comments, which, if you didn't use double slashes, would incorrectly be identified as a userID.  
+```  
+and you won't have to worry about the parser accidentally extracting an unintended userID from the part that you intended to just be a note/comment for yourself.  
+  
+----  
+  
+Informal Benchmark Testing The Impact Of Performance Flags On Completion Time  
+  
+The setup  
+29 October 2016  
+86 Artists  
+15119 images  
+All downloaded ahead of time [only the scanner will run, and it will always result in no changes - if you run this script daily, this is a near-typical use case, and the only completion time that you'll care about].  
+  
+The results  
+[00m:10s] : python pixivRoot.py -t 16 -T 16 --disable-page --disable-subpage  
+[00m:10s] : python pixivRoot.py -t 16 -T 16 --disable-page  
+[04m:31s] : python pixivRoot.py -t 16 -T 16 --disable-subpage  
+[20m:30s] : python pixivRoot.py -t 16 -T 16  
+  
+Using the results to inform your decisions  
+Unless you are going around deleting and moving files in your pixivRoot [which I don't recommend that you do], you should definitely be using the --disable-subpage flag. If you have an unusually high amount of confidence in my software and you have a high amount of confidence that you haven't accidentally messed with your pixivRoot files, you should be using the --disable-page flag [whether you use the --disable-subpage flag along with this is, for the most part, unimportant].  
+Infrequently, you should run this software without either of those flags, to make absolutely certain that you've downloaded everything. For me, I run this lightly once per day, so I might be running this without any flags once per month, or maybe once per week to see how well I wrote this software [and fix any issues if I see any]. For you, "infrequently" may mean a different time range.  
+  
+----  
   
 Everything that could go wrong, within reason  
 • The scraper never finishes : There's a chance that pixiv will change their interface enough to break the scraper. I expect something like this eventually, and if you post an "Issue" about it here on GitHub, we can work together to try to fix this scraper.  
