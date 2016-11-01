@@ -44,7 +44,7 @@ userIDA.txt looks like this:
 // found on twitter, but can't find on pixiv  
 // supermusou1110  
 ```  
-Those are the pixiv userIDs of those two artists, one per line. I keep them in order to make it easy for me to add to and remove from the list. Finding pixiv userIDs for artists is easy: it's the number in the URL of their profile/works page, such as `http://www.pixiv.net/member_illust.php?id=161519` being a pixiv userID of `161519`.  
+Those are the pixiv userIDs of those two artists, one per line [everything after a double-slash, include the slashes, will be ignored by this software, so you can use that to write notes for yourself if you want]. I keep them in order to make it easy for me to add to and remove from the list. Finding pixiv userIDs for artists is easy: it's the number in the URL of their profile/works page, such as `http://www.pixiv.net/member_illust.php?id=161519` being a pixiv userID of `161519`.  
   
 Every day, I'll open up Terminal, navigate to my pixivRoot folder and run pixivRoot.py there to keep my pixiv folder updated. I can then look at the "Date Modified" dates for the folders and files to see which artists have posted new works. Occasionally, I'll use my pixivRoot folder with an image viewing application to randomly view images that I've downloaded.  
   
