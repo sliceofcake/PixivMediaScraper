@@ -34,28 +34,29 @@ def assertFolder(foldername=None,wildname=None):
 			os.rename(matchA[0],foldername)
 def printUsage():
 	global p
-	print "usage   : python pixivRoot.py [-t threadcount] [-T threadcount] [--disable-page] [--disable-subpage]"
-	print "example : python pixivRoot.py --disable-page --disable-subpage"
-	print "example : python pixivRoot.py -t 32 -T 16 --disable-subpage"
-	print "-h                : display help information, which is what you're reading right now"
-	print "--help            : display help information, which is what you're reading right now"
-	print "--disable-page    : for each gallery, if you have the first subimage downloaded, it will"
-	print "                    ignore the rest of the gallery - it will assume that you have those files already"
-	print "                    this option is recommended unless you mess with your files manually"
-	print "--disable-subpage : for each subgallery, if you have the first subimage downloaded, it will"
-	print "                    ignore the rest of the subgallery - it will assume that you have those files already"
-	print "                    this option is highly recommended unless you mess with your files manually"
-	print "-t threadcount    : number of threads used to scan artist pages"
-	print "                    type : integer | minimum : 1 | maximum : "+str(p["threadMaxC1"])+" | default : "+str(p["threadC1"])
-	print "                    as you use more threads, your download rate and CPU usage will rise"
-	print "                    out of courtesy toward pixiv, I recommend keeping threadcount relatively low"
-	print "-T threadcount    : number of threads used to download images"
-	print "                    type : integer | minimum : 1 | maximum : "+str(p["threadMaxC2"])+" | default : "+str(p["threadC2"])
-	print "                    as you use more threads, your download rate and CPU usage will rise"
-	print "                    out of courtesy toward pixiv, I recommend keeping threadcount relatively low"
+	sys.stdout.write("usage   : python pixivRoot.py [-t threadcount] [-T threadcount] [--disable-page] [--disable-subpage]"+os.linesep)
+	sys.stdout.write("example : python pixivRoot.py --disable-page --disable-subpage"+os.linesep)
+	sys.stdout.write("example : python pixivRoot.py -t 32 -T 16 --disable-subpage"+os.linesep)
+	sys.stdout.write("-h                : display help information, which is what you're reading right now"+os.linesep)
+	sys.stdout.write("--help            : display help information, which is what you're reading right now"+os.linesep)
+	sys.stdout.write("--disable-page    : for each gallery, if you have the first subimage downloaded, it will"+os.linesep)
+	sys.stdout.write("                    ignore the rest of the gallery - it will assume that you have those files already"+os.linesep)
+	sys.stdout.write("                    this option is recommended unless you mess with your files manually"+os.linesep)
+	sys.stdout.write("--disable-subpage : for each subgallery, if you have the first subimage downloaded, it will"+os.linesep)
+	sys.stdout.write("                    ignore the rest of the subgallery - it will assume that you have those files already"+os.linesep)
+	sys.stdout.write("                    this option is highly recommended unless you mess with your files manually"+os.linesep)
+	sys.stdout.write("-t threadcount    : number of threads used to scan artist pages"+os.linesep)
+	sys.stdout.write("                    type : integer | minimum : 1 | maximum : "+str(p["threadMaxC1"])+" | default : "+str(p["threadC1"])+os.linesep)
+	sys.stdout.write("                    as you use more threads, your download rate and CPU usage will rise"+os.linesep)
+	sys.stdout.write("                    out of courtesy toward pixiv, I recommend keeping threadcount relatively low"+os.linesep)
+	sys.stdout.write("-T threadcount    : number of threads used to download images"+os.linesep)
+	sys.stdout.write("                    type : integer | minimum : 1 | maximum : "+str(p["threadMaxC2"])+" | default : "+str(p["threadC2"])+os.linesep)
+	sys.stdout.write("                    as you use more threads, your download rate and CPU usage will rise"+os.linesep)
+	sys.stdout.write("                    out of courtesy toward pixiv, I recommend keeping threadcount relatively low"+os.linesep)
+	sys.stdout.flush()
 def ll(m,colorS="default",noLineBreakF=False):
 	global p
-	sys.stdout.write(("" if colorS=="default" else p["cliColorO"][colorS])+str(m)+("" if colorS=="default" else p["cliColorO"]["end"])+("" if noLineBreakF else "\n"))
+	sys.stdout.write(("" if colorS=="default" else p["cliColorO"][colorS])+str(m)+("" if colorS=="default" else p["cliColorO"]["end"])+("" if noLineBreakF else os.linesep))
 	sys.stdout.flush()
 def fail(m):
 	global p
@@ -369,4 +370,4 @@ for t in tA:
 
 
 
-ll("\nEND","c")
+ll(os.linesep+"END","c")
