@@ -334,7 +334,7 @@ for t in tA:
 
 
 
-# scan each artist for image download links
+# download each image
 # ----------------------------------------------------------------------------------------------------------------------
 threadLimiter_MasterEntryThread = threading.BoundedSemaphore(p["threadC2"])
 class MasterEntryThread(threading.Thread):
