@@ -125,7 +125,7 @@ ll("To stop this program, use Control+Z for Apple Operating Systems.","m")
 # handle command-line arguments
 # ----------------------------------------------------------------------------------------------------------------------
 try:optA,leftoverA = getopt.getopt(sys.argv[1:],'ht:T:',['help','disable-page','disable-subpage'])
-except getopt.GetoptError,err:printUsage();fail("ERROR : "+str(err))
+except getopt.GetoptError as err:printUsage();fail("ERROR : "+str(err))
 for opt,arg in optA:
 	if opt in ["-h","--help"]:printUsage();sys.exit()
 	if opt in ["--disable-subpage"]:p["disableSubpageF"] = True
