@@ -1,10 +1,7 @@
 # coding=utf-8
 import threading
 import urllib
-# Python3 Compat.
-#import urllib2
-try:import urllib.request as urllib2
-except ImportError as err:import urllib2
+import urllib2
 import re
 import os
 import glob
