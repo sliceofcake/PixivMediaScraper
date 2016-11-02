@@ -98,9 +98,21 @@ p = {
 	"emailS"          : "",
 	"passwordS"       : "",
 	"masterEntryA"    : [], # [{domain,date,ID},...]
-	"userIDA"         : [],
-	# command-line interface colors
-	"cliColorO" : {
+	"userIDA"         : [],}
+# command-line interface colors, enabled for mac os x where I know it works, disabled everywhere else
+# https://docs.python.org/2/library/sys.html#platform
+# System              | platform value
+# --------------------+---------------
+# Linux (2.x and 3.x) | 'linux2'
+# Windows             | 'win32'
+# Windows/Cygwin      | 'cygwin'
+# Mac OS X            | 'darwin'
+# OS/2                | 'os2'
+# OS/2 EMX            | 'os2emx'
+# RiscOS              | 'riscos'
+# AtheOS              | 'atheos'
+if sys.platform == "darwin":
+	p["cliColorO"] = {
 		"r"         : "\033[91m",
 		"g"         : "\033[92m",
 		"b"         : "\033[94m",
@@ -111,8 +123,20 @@ p = {
 		"end"       : "\033[0m",
 		# plain color [colored BIU exists, look it up if you want it]
 		"bold"      : "\033[1m",
-		"underline" : "\033[4m",}}
-
+		"underline" : "\033[4m",}
+else:
+	p["cliColorO"] = {
+		"r"         : "",
+		"g"         : "",
+		"b"         : "",
+		"c"         : "",
+		"m"         : "",
+		"y"         : "",
+		"gray"      : "",
+		"end"       : "",
+		# plain color [colored BIU exists, look it up if you want it]
+		"bold"      : "",
+		"underline" : "",}
 
 
 
