@@ -1,5 +1,5 @@
 # PixivMediaScraper  
-Keeps a local folder tree of your favorite pixiv artists' works, quickly gets newly posted works. It's a Python script.  
+Keeps a local folder tree of your favorite pixiv artists' works, quickly gets newly posted works. [Python2] [Mac OS X]  
   
 Required:  
 L> A pixiv account  
