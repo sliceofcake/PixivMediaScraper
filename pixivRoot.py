@@ -84,7 +84,7 @@ def extractLinkData(linkS,method="GET",dataO={},headerO={},returnFalseOnFailureF
 	try:response = urllib2.urlopen(req)
 	except urllib2.HTTPError as err:
 		if returnFalseOnFailureF:return False
-		else:fail(err)
+		else:fail(linkS+" : "+str(err))
 	res = {"txt":response.read(),"txtHeader":str(response.info()),}
 	response.close()
 	return res
