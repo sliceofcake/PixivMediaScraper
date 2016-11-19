@@ -23,6 +23,7 @@ def esc(m):
 	s = re.sub('\'','’',s)
 	s = re.sub('\*','＊',s)
 	s = re.sub('\$','＄',s)
+	s = re.sub(':','：',s) # Apple's handling of this being a special character
 	return s
 # if folder exists, good. if not, and no similars, make it. if not and similar[s], take first similar and rename it.
 def assertFolder(foldername=None,wildname=None):

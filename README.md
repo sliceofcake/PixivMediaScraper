@@ -69,6 +69,7 @@ Notes
 ' -> ’ [string scoping]  
 \* -> ＊ [wildcard]  
 $ -> ＄ [variable reference]  
+: -> ： [special filename character in Apple OSs]  
 . -> 。 (only in cases of lone "." and lone "..") [path navigation]  
 I have a bad feeling this may not cover every case. I hope that this is a good attempt at preventing pixiv usernames from doing anything unexpected.  
 • Wherever you have two forward slashes together in your userID text file, those slashes and everything after them until the end of the line will be ignored by the parser. For example, the following line can be in your userID text file:  
