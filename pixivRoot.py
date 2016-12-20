@@ -273,7 +273,18 @@ class ArtistThread(threading.Thread):
 				# "referer: http://www.pixiv.net/member_illust.php?mode=medium&illust_id=56278541" "http://i2.pixiv.net/img-original/img/2016/04/10/00/00/04/56278541_p0.jpg" -o "USERNAME#299299/56278541_p0.jpg"
 				#function(match,domain,date,ID,page,extension,offset,string){link = domain+"img-original/img/"+date+ID+"_p"+page+extension;}
 				#<img src="http://i4.pixiv.net/c/150x150/img-master/img/2016/10/17/00/00/07/59506543_p0_master1200.jpg" class="_thumbnail">
-				m = re.findall('<img src="(https?:\/\/.+?\/).+?(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+?(\.[^\.]+)" class="_thumbnail">',reqE["txt"])
+				
+				# read from bottom to top
+				#----
+				m = re.findall('<img src="(https?:\/\/[^<>]+?\/)[^<>]+?(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+)[^<>]+?(\.[^\."]+)"',reqE["txt"])
+				#....
+				# 18 Dec 2016
+				# • pixiv changed their HTML by moving the class:thumbnail portion
+				# • the regex dot finder was encountering catastrophic backtracking, so changed them all to [^<>] to stay within the confines of the local HTML tag
+				#....
+				#m = re.findall('<img src="(https?:\/\/.+?\/).+?(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+?(\.[^\.]+)" class="_thumbnail">',reqE["txt"])
+				#----
+				
 				# if we have image matches
 				if m:
 					tupleI = -1 # initially incremented to 0
@@ -309,7 +320,6 @@ class ArtistThread(threading.Thread):
 							extension = passbackA[0]["extension"]
 							filename  = esc(ID+"_p"+str(pageSubI)+extension)
 							if (filename != ID+"_p"+str(pageSubI)+extension):fail("ERROR : filename changed after being cleansed [developer's fault - pixiv changed their url scheme]")
-							
 							# check if we already have this file on disk
 							fileFoundLocalF = os.path.isfile(self.foldername+"/"+filename) # filename comes from the previous loop block dealing with remoteF HEAD requests
 							
