@@ -278,7 +278,7 @@ class ArtistThread(threading.Thread):
 				#----
 				m = re.findall('<img src="(https?:\/\/[^<>]+?\/)[^<>]+?(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+)[^<>]+?(\.[^\."]+)"',reqE["txt"])
 				#....
-				# 18 Dec 2016
+				# 19 Dec 2016
 				# • pixiv changed their HTML by moving the class:thumbnail portion
 				# • the regex dot finder was encountering catastrophic backtracking, so changed them all to [^<>] to stay within the confines of the local HTML tag
 				#....
