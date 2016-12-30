@@ -276,12 +276,16 @@ class ArtistThread(threading.Thread):
 				
 				# read from bottom to top
 				#----
-				m = re.findall('<img src="(https?:\/\/[^<>]+?\/)[^<>]+?(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+)[^<>]+?(\.[^\."]+)"',reqE["txt"])
+				# 29 Dec 2016
+				# • pixiv has placeholder links before it asynchronously loads images
+				m = re.findall('data-src="(https?:\/\/[^<>\s]+?\/)[^<>\s]+?(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+)[^<>\s]+?(\.[^\."]+)"',reqE["txt"])
 				#....
 				# 19 Dec 2016
 				# • pixiv changed their HTML by moving the class:thumbnail portion
 				# • the regex dot finder was encountering catastrophic backtracking, so changed them all to [^<>] to stay within the confines of the local HTML tag
+				#m = re.findall('<img src="(https?:\/\/[^<>]+?\/)[^<>]+?(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+)[^<>]+?(\.[^\."]+)"',reqE["txt"])
 				#....
+				# original [unknown date]
 				#m = re.findall('<img src="(https?:\/\/.+?\/).+?(\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/)(\d+)_p(\d+).+?(\.[^\.]+)" class="_thumbnail">',reqE["txt"])
 				#----
 				
@@ -323,7 +327,7 @@ class ArtistThread(threading.Thread):
 							# check if we already have this file on disk
 							fileFoundLocalF = os.path.isfile(self.foldername+"/"+filename) # filename comes from the previous loop block dealing with remoteF HEAD requests
 							
-							ll(userIDS.rjust(9," ")+" userID | "+str(pageI).rjust(3," ")+" page | "+str(ID).rjust(9," ")+" illustID | "+str(pageSubI).rjust(3," ")+" subpage | "+("✕ download?" if fileFoundLocalF else "◯ download?")+" | "+self.foldername+"/"+filename,("default" if fileFoundLocalF else "g"))
+							ll(userIDS.rjust(9," ")+" userID | "+str(pageI).rjust(3," ")+" page | "+str(ID).rjust(9," ")+" illustID | "+str(pageSubI).rjust(3," ")+" subpage | "+("✕ download?" if fileFoundLocalF else "◯ download?")+" | "+self.foldername+"/"+filename.ljust(17," ")+" | "+url,("default" if fileFoundLocalF else "g"))
 							
 							if fileFoundLocalF:
 								# if we're on the first page, first image, first subimage, and --disable-page, and we already have this image downloaded,
