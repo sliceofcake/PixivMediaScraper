@@ -62,7 +62,7 @@ I enjoy seeing the art of many pixiv artists, but I'd like their images on my co
 Notes  
 • This script will never delete images. You may accumulate images that the artist has deleted, in which case you will have more images on your computer than are available on pixiv for that artist. This is intended behavior.  
 • This software throttles network requests for two reasons: your network connection may not perform well under high stress and pixiv may not appreciate you making such requests. Everyone has different circumstances though, so I let you decide, within some boundaries, how many simultaneous request-threads you want to support [through command-line option flags].  
-• These pixiv artist just seem to love throwing all sorts of characters into their usernames. It turns out that the shell environment is rather hostile to user input sanitization. To keep everyone happy, the following replacements are executed on usernames:  
+• These pixiv artists just seem to love throwing all sorts of characters into their usernames. It turns out that the shell environment is rather hostile to user input sanitization. To keep everyone happy, the following replacements are executed on usernames:  
 \ -> ＼ [path character in Windows]  
 / -> ／ [path character in UNIX]  
 " -> ” [string scoping]  
