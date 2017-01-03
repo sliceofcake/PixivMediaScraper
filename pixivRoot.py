@@ -7,6 +7,8 @@ import os
 import glob
 import sys
 import getopt
+import math
+import time
 
 # !!! TODO
 # • is {"Connection":"keep-alive"} being properly used? is it needed? is it helping? is it hurting?
@@ -90,6 +92,7 @@ def extractLinkData(linkS,method="GET",dataO={},headerO={},returnFalseOnFailureF
 	response.close()
 	return res
 p = {
+	"threadQueueMaxC" : 256, # maximum threads that OS will allow to be queued at any time
 	"threadC1"        : 16,
 	"threadMaxC1"     : 64,
 	"threadC2"        : 8,
@@ -99,7 +102,8 @@ p = {
 	"emailS"          : "",
 	"passwordS"       : "",
 	"masterEntryA"    : [], # [{domain,date,ID},...]
-	"userIDA"         : [],}
+	"userIDA"         : [],
+	"extensionSA"     : [".jpg",".png",".gif"],}
 # command-line interface colors, enabled for mac os x where I know it works, disabled everywhere else
 # https://docs.python.org/2/library/sys.html#platform
 # System              | platform value
@@ -308,7 +312,7 @@ class ArtistThread(threading.Thread):
 							# multithreaded execute
 							passbackA = []
 							tA = []
-							for extension in [".jpg",".png",".gif"]:
+							for extension in p["extensionSA"]:
 								t = ExtensionScannerThread(url=domain+"img-original/img/"+date+ID+"_p"+str(pageSubI)+extension,referer="http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+userIDS,extension=extension,passbackA=passbackA)
 								t.start()
 								tA.append(t)
@@ -364,12 +368,17 @@ class ExtensionScannerThread(threading.Thread):
 
 # multithreaded execute
 tA = []
-for userID in p["userIDA"]:
+for i in xrange(len(p["userIDA"])-1,0-1,-1):
+	userID = p["userIDA"][i]
 	t = ArtistThread(userID=userID)
 	t.start()
 	tA.append(t)
-for t in tA:
-	t.join()
+	# each thread spawns its own threads, so we need to crop down p["threadQueueMaxC"]
+	if i % math.floor(p["threadQueueMaxC"]/len(p["extensionSA"])) == 0:
+		for t in tA:
+			t.join()
+		tA = []
+
 
 
 
@@ -398,13 +407,17 @@ class MasterEntryThread(threading.Thread):
 ll("Downloading "+str(len(p["masterEntryA"]))+" images...","m")
 
 # multithreaded execute
+# go in reverse, if the script gets interrupted, then when it's next executed, it won't [as-often] improperly trigger the --disable flags
 tA = []
-for masterEntry in reversed(p["masterEntryA"]): # go in reverse, if the script gets interrupted, then when it's next executed, it won't improperly trigger the --disable flags
+for i in xrange(len(p["masterEntryA"])-1,0-1,-1):
+	masterEntry = p["masterEntryA"][i]
 	t = MasterEntryThread(url=masterEntry["url"],referer=masterEntry["referer"],filename=masterEntry["filename"])
 	t.start()
 	tA.append(t)
-for t in tA:
-	t.join()
+	if i % p["threadQueueMaxC"] == 0:
+		for t in tA:
+			t.join()
+		tA = []
 
 
 
