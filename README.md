@@ -60,6 +60,7 @@ Use case
 I enjoy seeing the art of many pixiv artists, but I'd like their images on my computer, so I can view them quickly and feed them into fancy image viewer software [and also view them even when I don't have an internet connection]. I can download pixiv art on my own with my web browser, but it's an extremely slow process, and keeping my folders updated manually would take way too much time out of my days.  
   
 Notes  
+• Remember to unlock all age restrictions on your account in order to ensure that you're downloading everything - by default when you make a new account, R18 works may be hidden  
 • This script will never delete images. You may accumulate images that the artist has deleted, in which case you will have more images on your computer than are available on pixiv for that artist. This is intended behavior.  
 • This software throttles network requests for two reasons: your network connection may not perform well under high stress and pixiv may not appreciate you making such requests. Everyone has different circumstances though, so I let you decide, within some boundaries, how many simultaneous request-threads you want to support [through command-line option flags].  
 • These pixiv artists just seem to love throwing all sorts of characters into their usernames. It turns out that the shell environment is rather hostile to user input sanitization. To keep everyone happy, the following replacements are executed on usernames:  
