@@ -151,10 +151,10 @@ for opt,arg in optA:
 	if opt in ["-h","--help"]:printUsage();sys.exit()
 	if opt in ["--complete"]:p["stopOnFoundF"] = False
 	if opt in ["-t"]:
-		try:p["threadC1"] = int(arg)
+		try:p["threadC"] = int(arg)
 		except ValueError as err:fail("ERROR : [-t threadcount] argument not integer : "+arg)
-		if p["threadC1"] <                1:fail("ERROR : [-t threadcount] argument too small (min:1) : "+arg)
-		if p["threadC1"] > p["threadMaxC1"]:fail("ERROR : [-t threadcount] argument too large (max:"+str(p["threadMaxC1"])+") : "+arg)
+		if p["threadC"] <               1:fail("ERROR : [-t threadcount] argument too small (min:1) : "+arg)
+		if p["threadC"] > p["threadMaxC"]:fail("ERROR : [-t threadcount] argument too large (max:"+str(p["threadMaxC1"])+") : "+arg)
 
 
 
