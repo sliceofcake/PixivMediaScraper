@@ -9,6 +9,7 @@ import sys
 import getopt
 import math
 import time
+import Queue
 
 # !!! TODO
 # • is {"Connection":"keep-alive"} being properly used? is it needed? is it helping? is it hurting?
@@ -37,23 +38,17 @@ def assertFolder(foldername=None,wildname=None):
 			os.rename(matchA[0],foldername)
 def printUsage():
 	global p
-	sys.stdout.write("usage   : python pixivRoot.py [-t threadcount] [-T threadcount] [--disable-page] [--disable-subpage]"+os.linesep)
-	sys.stdout.write("example : python pixivRoot.py --disable-page --disable-subpage"+os.linesep)
-	sys.stdout.write("example : python pixivRoot.py -t 32 -T 16 --disable-subpage"+os.linesep)
+	sys.stdout.write("usage   : python pixivRoot.py [-t threadcount] [--complete]"+os.linesep)
+	sys.stdout.write("example : python pixivRoot.py"+os.linesep)
+	sys.stdout.write("example : python pixivRoot.py --complete"+os.linesep)
+	sys.stdout.write("example : python pixivRoot.py -t 32 --complete"+os.linesep)
 	sys.stdout.write("-h                : display help information, which is what you're reading right now"+os.linesep)
 	sys.stdout.write("--help            : display help information, which is what you're reading right now"+os.linesep)
-	sys.stdout.write("--disable-page    : for each gallery, if you have the first subimage downloaded, it will"+os.linesep)
-	sys.stdout.write("                    ignore the rest of the gallery - it will assume that you have those files already"+os.linesep)
-	sys.stdout.write("                    this option is recommended unless you mess with your files manually"+os.linesep)
-	sys.stdout.write("--disable-subpage : for each subgallery, if you have the first subimage downloaded, it will"+os.linesep)
-	sys.stdout.write("                    ignore the rest of the subgallery - it will assume that you have those files already"+os.linesep)
-	sys.stdout.write("                    this option is highly recommended unless you mess with your files manually"+os.linesep)
-	sys.stdout.write("-t threadcount    : number of threads used to scan artist pages"+os.linesep)
-	sys.stdout.write("                    type : integer | minimum : 1 | maximum : "+str(p["threadMaxC1"])+" | default : "+str(p["threadC1"])+os.linesep)
-	sys.stdout.write("                    as you use more threads, your download rate and CPU usage will rise"+os.linesep)
-	sys.stdout.write("                    out of courtesy toward pixiv, I recommend keeping threadcount relatively low"+os.linesep)
-	sys.stdout.write("-T threadcount    : number of threads used to download images"+os.linesep)
-	sys.stdout.write("                    type : integer | minimum : 1 | maximum : "+str(p["threadMaxC2"])+" | default : "+str(p["threadC2"])+os.linesep)
+	sys.stdout.write("--complete        : will scan over all images, even after it recognizes some of them"+os.linesep)
+	sys.stdout.write("                    usually, the scanner will stop as soon as it sees a familiar image"+os.linesep)
+	sys.stdout.write("                    this option is intended for rarely-done checks of completeness"+os.linesep)
+	sys.stdout.write("-t threadcount    : number of threads used"+os.linesep)
+	sys.stdout.write("                    type : integer | minimum : 1 | maximum : "+str(p["threadMaxC"])+" | default : "+str(p["threadC"])+os.linesep)
 	sys.stdout.write("                    as you use more threads, your download rate and CPU usage will rise"+os.linesep)
 	sys.stdout.write("                    out of courtesy toward pixiv, I recommend keeping threadcount relatively low"+os.linesep)
 	sys.stdout.flush()
@@ -92,18 +87,15 @@ def extractLinkData(linkS,method="GET",dataO={},headerO={},returnFalseOnFailureF
 	response.close()
 	return res
 p = {
-	"threadQueueMaxC" : 256, # maximum threads that OS will allow to be queued at any time
-	"threadC1"        : 16,
-	"threadMaxC1"     : 64,
-	"threadC2"        : 8,
-	"threadMaxC2"     : 64,
-	"disablePageF"    : False,
-	"disableSubpageF" : False,
-	"emailS"          : "",
-	"passwordS"       : "",
-	"masterEntryA"    : [], # [{domain,date,ID},...]
-	"userIDA"         : [],
-	"extensionSA"     : [".jpg",".png",".gif"],}
+	"threadC"          : 16,
+	"threadMaxC"       : 64,
+	"stopOnFoundF"     : True,
+	"emailS"           : "",
+	"passwordS"        : "",
+	"userIDA"          : [],
+	"jobEQueue_stage1" : Queue.Queue(),
+	"jobEQueue_stage2" : Queue.Queue(),
+	"extensionSA"      : [".jpg",".png",".gif"],}
 # command-line interface colors, enabled for mac os x where I know it works, disabled everywhere else
 # https://docs.python.org/2/library/sys.html#platform
 # System              | platform value
@@ -153,22 +145,16 @@ ll("To stop this program, use Control+Z for Apple Operating Systems.","m")
 
 # handle command-line arguments
 # ----------------------------------------------------------------------------------------------------------------------
-try:optA,leftoverA = getopt.getopt(sys.argv[1:],'ht:T:',['help','disable-page','disable-subpage'])
+try:optA,leftoverA = getopt.getopt(sys.argv[1:],'ht:T:',['help','complete'])
 except getopt.GetoptError as err:printUsage();fail("ERROR : "+str(err))
 for opt,arg in optA:
 	if opt in ["-h","--help"]:printUsage();sys.exit()
-	if opt in ["--disable-subpage"]:p["disableSubpageF"] = True
-	if opt in ["--disable-page"   ]:p["disablePageF"   ] = True
+	if opt in ["--complete"]:p["stopOnFoundF"] = False
 	if opt in ["-t"]:
 		try:p["threadC1"] = int(arg)
 		except ValueError as err:fail("ERROR : [-t threadcount] argument not integer : "+arg)
 		if p["threadC1"] <                1:fail("ERROR : [-t threadcount] argument too small (min:1) : "+arg)
 		if p["threadC1"] > p["threadMaxC1"]:fail("ERROR : [-t threadcount] argument too large (max:"+str(p["threadMaxC1"])+") : "+arg)
-	if opt in ["-T"]:
-		try:p["threadC2"] = int(arg)
-		except ValueError as err:fail("ERROR : [-T threadcount] argument not integer : "+arg)
-		if p["threadC2"] <                1:fail("ERROR : [-T threadcount] argument too small (min:1) : "+arg)
-		if p["threadC2"] > p["threadMaxC2"]:fail("ERROR : [-T threadcount] argument too large (max:"+str(p["threadMaxC2"])+") : "+arg)
 
 
 
@@ -181,10 +167,11 @@ txt = readFile("userIDA.txt")
 txt = re.sub(re.compile('//.*$',re.MULTILINE),'',txt)
 # parse for ints
 userIDSA = re.split('\\D+',txt)
-if len(userIDSA) == 0:fail("ERROR : Fill in your userIDA.txt file with pixiv userIDs")
 for userIDS in userIDSA:
 	if userIDS != "": # because of how the regex split that I wrote works, blanks may show up at the front and back
 		p["userIDA"].append(int(userIDS))
+		p["jobEQueue_stage1"].put({"classnameS":"Stage1Job","argO":{"userID":int(userIDS)}},False)
+if len(p["userIDA"]) == 0:fail("ERROR : Fill in your userIDA.txt file with pixiv userIDs (the number found in the URL bar for a profile page), one per line")
 
 
 
@@ -237,23 +224,21 @@ ll("PHPSessionID GET!! : "+PHPSessionID,"m")
 
 # scan each artist for image download links
 # ----------------------------------------------------------------------------------------------------------------------
-threadLimiter_ArtistThread = threading.BoundedSemaphore(p["threadC1"])
-class ArtistThread(threading.Thread):
+class Stage1Job():
 	def __init__(self,userID=0):
-		super(ArtistThread,self).__init__()
 		self.userID = userID
 		self.foldername = None
 	def run(self):
 		global p
-		threadLimiter_ArtistThread.acquire()
-		try:
-			userIDS = str(self.userID)
-			ll(userIDS.rjust(9," ")+" userID","m")
-			pageI = 0 # initially incremented to 1
+		userIDS = str(self.userID)
+		#ll(userIDS.rjust(9," ")+" userID","m")
+		imageEA = []
+		pageI = 0 # initially incremented to 1
+		try: # try-except-finally misused here so that "return" takes it to the finally block, where we can wrap up
 			while True:
 				pageI += 1
 				
-				ll(userIDS.rjust(9," ")+" userID | "+str(pageI).rjust(3," ")+" page")
+				#ll(userIDS.rjust(9," ")+" userID | "+str(pageI).rjust(3," ")+" page")
 				
 				# make the page request
 				reqE = extractLinkData("http://www.pixiv.net/member_illust.php?id="+userIDS+"&type=all&p="+str(pageI),"GET",{},{"Cookie":"PHPSESSID="+PHPSessionID,"Connection":"keep-alive",})
@@ -294,132 +279,173 @@ class ArtistThread(threading.Thread):
 				#----
 				
 				# if we have image matches
-				if m:
-					tupleI = -1 # initially incremented to 0
-					# for each image match
-					for tuple in m:
-						tupleI += 1
-						domain    = tuple[0]
-						date      = tuple[1]
-						ID        = tuple[2]
-						# for each page that could be covered [within a subgallery]
-						pageSubI = -1 # initially incremented to 0
-						while True:
-							pageSubI += 1
-							
-							# try each file extension, on the first [and, should be, only] match, set fileFoundRemoteF to True and proceed
-							# multithreaded, so there will be some unneeded work done, but the time savings make it worth doing this way
-							# multithreaded execute
-							passbackA = []
-							tA = []
-							for extension in p["extensionSA"]:
-								t = ExtensionScannerThread(url=domain+"img-original/img/"+date+ID+"_p"+str(pageSubI)+extension,referer="http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+userIDS,extension=extension,passbackA=passbackA)
-								t.start()
-								tA.append(t)
-							for t in tA:
-								t.join()
-							fileFoundRemoteF = len(passbackA) >= 1
-							
-							# if page not found, we must have reached the end of the sub gallery [or unhandled filetype, in which case breaking here isn't great, but it's okay]
-							if not fileFoundRemoteF:break
-							
-							url       = passbackA[0]["url"]
-							referer   = passbackA[0]["referer"]
-							extension = passbackA[0]["extension"]
-							filename  = esc(ID+"_p"+str(pageSubI)+extension)
-							if (filename != ID+"_p"+str(pageSubI)+extension):fail("ERROR : filename changed after being cleansed [developer's fault - pixiv changed their url scheme]")
-							# check if we already have this file on disk
-							fileFoundLocalF = os.path.isfile(self.foldername+"/"+filename) # filename comes from the previous loop block dealing with remoteF HEAD requests
-							
-							ll(userIDS.rjust(9," ")+" userID | "+str(pageI).rjust(3," ")+" page | "+str(ID).rjust(9," ")+" illustID | "+str(pageSubI).rjust(3," ")+" subpage | "+("✕ download?" if fileFoundLocalF else "◯ download?")+" | "+self.foldername+"/"+filename.ljust(17," ")+" | "+url,("default" if fileFoundLocalF else "g"))
-							
-							if fileFoundLocalF:
-								# if we're on the first page, first image, first subimage, and --disable-page, and we already have this image downloaded,
-								if pageI == 1 and tupleI == 0 and pageSubI == 0 and p["disablePageF"]:
-									# assume that we have this entire gallery
-									return # stop scanning this artist - the finally block will take up our work after this point [not an actual return, just a break-all construct]
-								# if we're on the first subimage of any subgallery, and --disable-subpage, and we already have this image downloaded,
-								elif pageSubI == 0 and p["disableSubpageF"]:
-									# assume that we have this entire subgallery
-									break # stop scanning this subgallery
-								else:
-									pass # normal-mode, check remaining subgallery images
-							else:
-								p["masterEntryA"].append({"url":url,"referer":referer,"filename":self.foldername+"/"+filename})
-				else:
+				if len(m) == 0:
 					break
+				
+				# ----------------------------------------
+				# for each main image
+				tupleI = -1 # initially incremented to 0
+				for domain,date,ID,trash0,trash1 in m:
+					tupleI += 1
+					
+					# ----------------------------------------
+					# for each individual image
+					pageSubI = -1 # initially incremented to 0
+					while True:
+						pageSubI += 1
+						
+						foundO = {
+							"referer"   : "http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+userIDS,
+							"pathLocal" : "",
+							"extension" : "",
+							"url"       : "",}
+						
+						# check if we already have this file on disk
+						fileFoundLocalF = False
+						for extensionS in p["extensionSA"]:
+							foundO["pathLocal"] = self.foldername+"/"+esc(ID+"_p"+str(pageSubI)+extensionS)
+							if os.path.isfile(foundO["pathLocal"]):
+								fileFoundLocalF = True
+								break
+						
+						# stopOnFoundF stop condition
+						if fileFoundLocalF and p["stopOnFoundF"]:
+							ll(        userIDS      .rjust(9," ")+" userID"
+								+" | "+str(pageI   ).rjust(3," ")+" page"
+								+" | "+str(ID      ).rjust(9," ")+" illustID"
+								+" | "+str(pageSubI).rjust(3," ")+" subpage"
+								+" | "+("✕ download?" if fileFoundLocalF else "◯ download?")+""
+								+" | "+foundO["pathLocal"].ljust(17," ")+""
+								,("default" if fileFoundLocalF else "g"))
+							# the finally block will take up our work after this point [not an actual return, just a break-all construct]
+							return
+						
+						# try each file extension, on the first [and, should be, only] match, set fileFoundRemoteF to True and proceed
+						fileFoundRemoteF = False
+						for extensionS in p["extensionSA"]:
+							foundO["extension"] = extensionS
+							foundO["url"] = domain+"img-original/img/"+date+ID+"_p"+str(pageSubI)+extensionS
+							foundO["pathLocal"] = self.foldername+"/"+esc(ID+"_p"+str(pageSubI)+extensionS)
+							reqE = extractLinkData(foundO["url"],"HEAD",{},{"Referer":foundO["referer"],"Connection":"keep-alive",},returnFalseOnFailureF=True)
+							if reqE != False:
+								fileFoundRemoteF = True
+								break
+						# if page not found, we must have reached the end of the sub gallery [or unhandled filetype, in which case breaking here isn't great, but it's okay]
+						if not fileFoundRemoteF:
+							break
+						
+						ll(        userIDS      .rjust(9," ")+" userID"
+							+" | "+str(pageI   ).rjust(3," ")+" page"
+							+" | "+str(ID      ).rjust(9," ")+" illustID"
+							+" | "+str(pageSubI).rjust(3," ")+" subpage"
+							+" | "+("✕ download?" if fileFoundLocalF else "◯ download?")+""
+							+" | "+foundO["pathLocal"].ljust(17," ")+""
+							+" | "+foundO["url"]
+							,("default" if fileFoundLocalF else "g"))
+						
+						if not fileFoundLocalF:
+							imageEA.append({"url":foundO["url"],"referer":foundO["referer"],"pathLocal":foundO["pathLocal"]})
+					# done with individual image
+				# done with head images on current page
+			# done with pages
 		finally:
-			threadLimiter_ArtistThread.release()
+			if len(imageEA) >= 1:
+				imageEQueue = Queue.Queue()
+				for imageE in reversed(imageEA):
+					imageEQueue.put(imageE)
+				p["jobEQueue_stage2"].put({"classnameS":"Stage2Job","argO":{"imageEQueue":imageEQueue}})
 
-class ExtensionScannerThread(threading.Thread):
-	def __init__(self,url="",referer="",extension="",passbackA=None):
-		super(ExtensionScannerThread,self).__init__()
-		self.url       = url
-		self.referer   = referer
-		self.extension = extension
-		self.passbackA = passbackA
+class Stage2Job():
+	def __init__(self,imageEQueue):
+		self.imageEQueue = imageEQueue
 	def run(self):
-		try:
-			reqE = extractLinkData(self.url,"HEAD",{},{"Referer":self.referer,"Connection":"keep-alive",},returnFalseOnFailureF=True)
-			if reqE != False:
-				self.passbackA.append({"url":self.url,"referer":self.referer,"extension":self.extension,})
-		finally:
-			pass
+		while True:
+			try:
+				imageE = self.imageEQueue.get(False)
+			except Queue.Empty:
+				return
+			#ll("△ "+imageE["pathLocal"],"gray")
+			reqE = extractLinkData(imageE["url"],"GET",{},{"Referer":imageE["referer"],"Connection":"keep-alive",})
+			text_file = open(imageE["pathLocal"],"w")
+			text_file.write(reqE["txt"])
+			text_file.close()
+			ll("◯ "+imageE["pathLocal"],"g")
 
+class Proc(threading.Thread):
+	def __init__(self,getFxn):
+		super(Proc,self).__init__()
+		self.getFxn = getFxn
+	def run(self):
+		global p
+		while True:
+			jobE = self.getFxn()
+			if jobE == None:
+				return
+			job = globals()[jobE["classnameS"]](**jobE["argO"])
+			job.run()
+
+
+
+
+# scan for each image
+# ----------------------------------------------------------------------------------------------------------------------
 # multithreaded execute
 tA = []
-for i in xrange(len(p["userIDA"])-1,0-1,-1):
-	userID = p["userIDA"][i]
-	t = ArtistThread(userID=userID)
-	t.start()
+def stage1Fxn():
+	global p
+	try:
+		return p["jobEQueue_stage1"].get(False)
+	except Queue.Empty:
+		return None
+for i in xrange(p["threadC"]):
+	t = Proc(getFxn=stage1Fxn)
+	t.daemon = True
 	tA.append(t)
-	# each thread spawns its own threads, so we need to crop down p["threadQueueMaxC"]
-	if i % math.floor(p["threadQueueMaxC"]/len(p["extensionSA"])) == 0:
-		for t in tA:
-			t.join()
-		tA = []
+	t.start()
+for t in tA:
+	t.join()
+tA = []
 
+# read through the queue (without, in the end, modifying it) to count the number of images to download
+tempQueue = Queue.Queue()
+imageN = 0
+while True:
+	try:
+		jobE = p["jobEQueue_stage2"].get(False)
+	except Queue.Empty:
+		break
+	imageN += jobE["argO"]["imageEQueue"].qsize()
+	tempQueue.put(jobE)
+while True:
+	try:
+		jobE = tempQueue.get(False)
+	except Queue.Empty:
+		break
+	p["jobEQueue_stage2"].put(jobE)
 
 
 
 
 # download each image
 # ----------------------------------------------------------------------------------------------------------------------
-threadLimiter_MasterEntryThread = threading.BoundedSemaphore(p["threadC2"])
-class MasterEntryThread(threading.Thread):
-	def __init__(self,url="",referer="",filename=""):
-		super(MasterEntryThread,self).__init__()
-		self.url      = url
-		self.referer  = referer
-		self.filename = filename
-	def run(self):
-		threadLimiter_MasterEntryThread.acquire()
-		try:
-			ll("△","gray",noLineBreakF=True)
-			reqE = extractLinkData(self.url,"GET",{},{"Referer":self.referer,"Connection":"keep-alive",})
-			text_file = open(self.filename,"w")
-			text_file.write(reqE["txt"])
-			text_file.close()
-		finally:
-			ll("◯","g",noLineBreakF=True)
-			threadLimiter_MasterEntryThread.release()
-
-ll("Downloading "+str(len(p["masterEntryA"]))+" images...","m")
-
 # multithreaded execute
-# go in reverse, if the script gets interrupted, then when it's next executed, it won't [as-often] improperly trigger the --disable flags
+# go in reverse, if the script gets interrupted, then when it's next executed, it won't [as-often] improperly trigger the stopOnFoundF flag
+ll("Downloading "+str(imageN)+" images...","m")
 tA = []
-for i in xrange(len(p["masterEntryA"])-1,0-1,-1):
-	masterEntry = p["masterEntryA"][i]
-	t = MasterEntryThread(url=masterEntry["url"],referer=masterEntry["referer"],filename=masterEntry["filename"])
-	t.start()
+def stage2Fxn():
+	global p
+	try:
+		return p["jobEQueue_stage2"].get(False)
+	except Queue.Empty:
+		return None
+for i in xrange(p["threadC"]):
+	t = Proc(getFxn=stage2Fxn)
+	t.daemon = True
 	tA.append(t)
-	if i % p["threadQueueMaxC"] == 0:
-		for t in tA:
-			t.join()
-		tA = []
-
-
+	t.start()
+for t in tA:
+	t.join()
+tA = []
 
 
 ll(os.linesep+"END","c")
