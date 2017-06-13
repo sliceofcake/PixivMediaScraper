@@ -248,13 +248,23 @@ class Stage1Job():
 				
 				# get the username on the first round
 				if self.foldername == None:
-					m = re.search('<h1 class="user">(.+?)</h1>',reqE["txt"]);
+					m = re.search('<h1 class="user">(.+?)</h1>',reqE["txt"])
 					if m:
 						username = m.group(1)
 						compoundUsername = username+"#"+userIDS
 					else:
-						ll("WARNING : could not find username on page - falling back to solely userID [developer's fault - pixiv changed their artist page format]","y")
-						compoundUsername = "#"+userIDS
+						# 12 Jun 2017
+						# pixiv sometimes shows a new-ish looking page - possibly one of those guerilla beta pushes
+						m = re.search('class="user-name"title="(.+?)">',reqE["txt"])
+						if m:
+							username = m.group(1)
+							compoundUsername = username+"#"+userIDS
+						else:
+							ll("WARNING : could not find username on page - falling back to solely userID [developer's fault - pixiv changed their artist page format]","y")
+							#ll(reqE["txt"])
+							#ll("http://www.pixiv.net/member_illust.php?id="+userIDS+"&type=all&p="+str(pageI))
+							#sys.exit()
+							compoundUsername = "#"+userIDS
 					self.foldername = esc(compoundUsername)
 					assertFolder(foldername=self.foldername,wildname="*"+esc("#"+userIDS))
 				
