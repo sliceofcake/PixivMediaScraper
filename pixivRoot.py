@@ -91,7 +91,7 @@ def p_extractTxt(linkS,returnFalseOnFailureF=False):
 	global PHPSessionID
 	reqE = extractLinkData(linkS,"GET",{},{"Cookie":"PHPSESSID="+PHPSessionID,"Connection":"keep-alive",},True)
 	if reqE == False:
-		if returnFalseOnFailure:
+		if returnFalseOnFailureF:
 			return False
 		else:
 			fail("ERROR : Failed to extract text from "+"https://www.pixiv.net/ajax/user/"+userIDS+"/profile/all"+" (fetch error)")
