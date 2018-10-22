@@ -94,7 +94,7 @@ def p_extractTxt(linkS,returnFalseOnFailureF=False):
 		if returnFalseOnFailureF:
 			return False
 		else:
-			fail("ERROR : Failed to extract text from "+"https://www.pixiv.net/ajax/user/"+userIDS+"/profile/all"+" (fetch error)")
+			fail("ERROR : Failed to extract text from "+linkS+" (fetch error)")
 	return reqE["txt"]
 def p_extractJson(linkS,returnFalseOnFailureF=False):
 	try:
@@ -313,7 +313,10 @@ class Stage1Job():
 			
 			# GET USERNAME
 			#-------------
-			txtS = p_extractTxt("https://www.pixiv.net/member.php?id="+userIDS)
+			txtS = p_extractTxt("https://www.pixiv.net/member.php?id="+userIDS,True)
+			if txtS is False:
+				warn("WARNING : User:"+str(userIDS)+"'s page is not viewable [probably a closed account].")
+				return
 			
 			# Ensure we're looking at a valid, signed-in page. If not, stop the entire program.
 			# !!! Of squishy use in this particular spot. Preferably in a more global-ish one-time place.
@@ -358,7 +361,7 @@ class Stage1Job():
 			ll(      userIDS             .rjust( 9," ")+" user"
 			+  " | "+str(len(illustIDNA)).rjust(27," ")+" gallery count"
 			+  " | "+usernameS                         +" name"
-			,"default")
+			,"c")
 			if len(illustIDNA) == 0:
 				return
 			#ll(illustIDNA)
@@ -390,7 +393,7 @@ class Stage1Job():
 			ll(      userIDS           .rjust( 9," ")+" user"
 			+  " | "+str(len(rolodex1)).rjust(30," ")+" work count"
 			+  " | "+usernameS                       +" name"
-			,"default")
+			,"b")
 			#ll("rolodex1.keys()"+str(map(lambda o:o["illustS"],rolodex1)))
 			
 			# COMPILE DOWNLOAD JOBS
@@ -410,13 +413,14 @@ class Stage1Job():
 						localF = True
 						break
 				if localF:
-					ll(      row2["userS"  ].rjust(9," ")+" user"
-					+  " | "+row2["illustS"].rjust(9," ")+" illust"
-					+  " | "+row2["pageS"  ].rjust(3," ")+" page"
-					+  " | "+("✕ DL" if localF else "◯ DL")
-					+  " | "+usernameS                   +" name"
-					+  " | "+pathS
-					,"default")
+					# [21 Oct 2018] Seeing this text was getting annoying since it doesn't matter much.
+					#ll(      row2["userS"  ].rjust(9," ")+" user"
+					#+  " | "+row2["illustS"].rjust(9," ")+" illust"
+					#+  " | "+row2["pageS"  ].rjust(3," ")+" page"
+					#+  " | "+("✕ DL" if localF else "◯ DL")
+					#+  " | "+usernameS                   +" name"
+					#+  " | "+pathS
+					#,"default")
 					continue
 				
 				row2["dateS"  ] = p_regex('\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/',row1["urlNotS"])[0]
