@@ -40,9 +40,12 @@ def assertFolder(foldername=None,wildname=None):
 			os.rename(matchA[0],foldername)
 def printUsage():
 	global p
-	sys.stdout.write("usage   : python pixivRoot.py [-t threadcount]"+os.linesep)
+	sys.stdout.write("usage   : python pixivRoot.py [-t threadcount] [-c cookie] [-h] [--help]"+os.linesep)
 	sys.stdout.write("example : python pixivRoot.py"+os.linesep)
 	sys.stdout.write("example : python pixivRoot.py -t 32"+os.linesep)
+	sys.stdout.write("example : python pixivRoot.py -c PHPSESSID=01234567_0abcd123e4567f8g90hijk1234567lmn"+os.linesep)
+	sys.stdout.write("example : python pixivRoot.py -h"+os.linesep)
+	sys.stdout.write("example : python pixivRoot.py --help"+os.linesep)
 	sys.stdout.write("-h                : display help information, which is what you're reading right now"+os.linesep)
 	sys.stdout.write("--help            : display help information, which is what you're reading right now"+os.linesep)
 	sys.stdout.write("-t threadcount    : number of threads used"+os.linesep)
@@ -50,6 +53,11 @@ def printUsage():
 	sys.stdout.write("                    • as you use more threads, your download rate and CPU usage will rise"+os.linesep)
 	sys.stdout.write("                    • out of courtesy toward pixiv, I recommend keeping threadcount relatively low"+os.linesep)
 	sys.stdout.write("                    • pixiv is implied to have both an account and an IP blocking mechanism - scary stuff"+os.linesep)
+	sys.stdout.write("-c cookie         : bypass sign-in process by using a specified cookie"+os.linesep)
+	sys.stdout.write("                    this method is much more reliable than scripted sign-in, but requires manual labor and must be performed every time the cookie expires"+os.linesep)
+	sys.stdout.write("                    the only part of the cookie that likely matters is the \"PHPSESSID\" key-value pair"+os.linesep)
+	sys.stdout.write("                    to get this value, http sniff a signed-in request to pixiv's main page and copy the cookie that gets sent to pixiv"+os.linesep)
+	sys.stdout.write("                    this value is marked as \"HttpOnly\", making this process impossible to JavaScript-ify"+os.linesep)
 	sys.stdout.flush()
 def ll(m,colorS="default",noLineBreakF=False):
 	global p
@@ -89,7 +97,8 @@ def extractLinkData(linkS,method="GET",dataO={},headerO={},returnFalseOnFailureF
 
 def p_extractTxt(linkS,returnFalseOnFailureF=False):
 	global PHPSessionID
-	reqE = extractLinkData(linkS,"GET",{},{"Cookie":"PHPSESSID="+PHPSessionID,"Connection":"keep-alive",},True)
+	cookie = p["cookieOverrideS"] if p["cookieOverrideS"] is not None else "PHPSESSID="+PHPSessionID
+	reqE = extractLinkData(linkS,"GET",{},{"Cookie":cookie,"Connection":"keep-alive",},True)
 	if reqE == False:
 		if returnFalseOnFailureF:
 			return False
@@ -167,6 +176,8 @@ def p_lChunk(l,n):
 p = {
 	"threadC"          : 16,
 	"threadMaxC"       : 64,
+	"cookieOverrideS"  : None,
+	"indentS"          : "    ",
 	"emailS"           : "",
 	"passwordS"        : "",
 	"userIDA"          : [],
@@ -223,7 +234,7 @@ ll("To stop this program, use Control+Z for Apple Operating Systems.","m")
 
 # handle command-line arguments
 # ----------------------------------------------------------------------------------------------------------------------
-try:optA,leftoverA = getopt.getopt(sys.argv[1:],'ht:T:',['help'])
+try:optA,leftoverA = getopt.getopt(sys.argv[1:],'htc:T:',['help'])
 except getopt.GetoptError as err:printUsage();fail("ERROR : "+str(err))
 for opt,arg in optA:
 	if opt in ["-h","--help"]:printUsage();sys.exit()
@@ -232,6 +243,8 @@ for opt,arg in optA:
 		except ValueError as err:fail("ERROR : [-t threadcount] argument not integer : "+arg)
 		if p["threadC"] <               1:fail("ERROR : [-t threadcount] argument too small (min:1) : "+arg)
 		if p["threadC"] > p["threadMaxC"]:fail("ERROR : [-t threadcount] argument too large (max:"+str(p["threadMaxC"])+") : "+arg)
+	if opt in ["-c"]:
+		p["cookieOverrideS"] = str(arg)
 
 
 
@@ -269,33 +282,49 @@ ll("userID List : "+str(p["userIDA"]))
 
 # pixiv login to obtain PHPSESSID cookie
 # ----------------------------------------------------------------------------------------------------------------------
-# open the login page
-reqE = extractLinkData("https://accounts.pixiv.net/login","GET")
-
-# get the form callback key, there are two places to find it, I chose the JSON location
-# L> <input type="hidden" name="post_key" value="4d0dc83acbe2f27ba139be1559c4455d">
-# L> "pixivAccount.postKey":"4d0dc83acbe2f27ba139be1559c4455d"
-m = re.search('"pixivAccount\.postKey":"(.+?)"',reqE["txt"])
-if not m:fail("ERROR : could not find login callback key [developer's fault - pixiv changed their login page format]")
-postKey = m.group(1)
-ll("postKey GET!! : "+postKey,"m")
-
-# get the callback cookie from the header
-m = re.search('PHPSESSID=(.+?);',reqE["txtHeader"])
-if not m:fail("ERROR : could not find login callback cookie [developer's fault - pixiv changed their login page format]")
-PHPSessionID = m.group(1)
-ll("PHPSessionID GET!! : "+PHPSessionID,"m")
-
-# make the signin request
-ll("attempting to sign in as user:"+p["emailS"])
-reqE = extractLinkData("https://accounts.pixiv.net/api/login?lang=en","POST",{"pixiv_id":p["emailS"],"password":p["passwordS"],"captcha":"","g_recaptcha_response":"","post_key":postKey,"source":"accounts",},{"Connection":"keep-alive","Cookie":"PHPSESSID="+PHPSessionID,})
-ll("pixiv says : "+reqE["txt"],"m")
-
-# get the newest cookie before we proceed
-m = re.search('PHPSESSID=(.+?);',reqE["txtHeader"])
-if not m:fail("ERROR : could not find login response cookie [either -> your fault - invalid signin information, temporarily captcha-gated account, unexplainably temporarily locked account OR developer's fault - pixiv changed their login page format]. Try visiting pixiv in a web browser and logging in manually with your designated account to see if the login page says anything interesting. In the worst case, try making a new account (and update your authentication text file accordingly).")
-PHPSessionID = m.group(1)
-ll("PHPSessionID GET!! : "+PHPSessionID,"m")
+PHPSessionID = None
+if p["cookieOverrideS"] is None:
+	ll("Chosen authentication method : sign in.","m");
+	
+	# open the login page
+	reqE = extractLinkData("https://accounts.pixiv.net/login","GET")
+	
+	# get the form callback key, there are two places to find it, I chose the JSON location
+	# L> <input type="hidden" name="post_key" value="4d0dc83acbe2f27ba139be1559c4455d">
+	# L> "pixivAccount.postKey":"4d0dc83acbe2f27ba139be1559c4455d"
+	m = re.search('"pixivAccount\.postKey":"(.+?)"',reqE["txt"])
+	if not m:fail("ERROR : could not find login callback key [developer's fault - pixiv changed their login page format]")
+	postKey = m.group(1)
+	ll("postKey GET!! : "+postKey,"m")
+	
+	# get the callback cookie from the header
+	m = re.search('PHPSESSID=(.+?);',reqE["txtHeader"])
+	if not m:fail("ERROR : could not find login callback cookie [developer's fault - pixiv changed their login page format]")
+	PHPSessionID = m.group(1)
+	ll("PHPSessionID GET!! : "+PHPSessionID,"m")
+	
+	#....
+	
+	# make the signin request
+	ll("Attempting to sign in as user:"+p["emailS"],"m")
+	reqE = extractLinkData("https://accounts.pixiv.net/api/login?lang=en","POST",{"pixiv_id":p["emailS"],"password":p["passwordS"],"captcha":"","g_recaptcha_response":"","post_key":postKey,"source":"accounts",},{"Connection":"keep-alive","Cookie":"PHPSESSID="+PHPSessionID,})
+	ll("pixiv says : "+reqE["txt"],"m")
+	
+	# get the newest cookie before we proceed
+	m = re.search('PHPSESSID=(.+?);',reqE["txtHeader"])
+	if not m:
+		msgS  = "ERROR : could not find login response cookie"
+		msgS += os.linesep+p["indentS"]+"Perhaps supplied sign-in information is invalid (please check your authentication text file)."
+		msgS += os.linesep+p["indentS"]+"Perhaps your account is being captcha-gated (please try signing in with a web browser to look for anomalies)."
+		msgS += os.linesep+p["indentS"]+"Perhaps your account has been [temporarily] locked (please try signing in with a web browser to look for anomalies)."
+		msgS += os.linesep+p["indentS"]+"Perhaps pixiv changed their login page format, thwarting this script until the developer updates it (contact the developer)."
+		msgS += os.linesep+p["indentS"]+"You could always attempt to create and use a new account, updating your authentication text file accordingly."
+		msgS += os.linesep+p["indentS"]+"You could always attempt to use the cookie override command-line variable, the downside being it involves manual labor. Use --help to see information about this option."
+		fail(msgS)
+	PHPSessionID = m.group(1)
+	ll("PHPSessionID GET!! : "+PHPSessionID,"m")
+else:
+	ll("Chosen authentication method : cookie override.","m");
 
 
 
@@ -316,7 +345,10 @@ class Stage1Job():
 			#-------------
 			txtS = p_extractTxt("https://www.pixiv.net/member.php?id="+userIDS,True)
 			if txtS is False:
-				warn("WARNING : User:"+str(userIDS)+"'s page is not viewable [probably a closed account].")
+				msgS  = "WARNING : User:"+str(userIDS)+"'s page is not viewable."
+				msgS += os.linesep+p["indentS"]+"This could be an authentication issue causing a redirect loop (it if happens for all artists)."
+				msgS += os.linesep+p["indentS"]+"This could be a closed account (if it only happens for a few artists)."
+				warn(msgS)
 				return
 			
 			# Ensure we're looking at a valid, signed-in page. If not, stop the entire program.
