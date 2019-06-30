@@ -287,12 +287,13 @@ PHPSessionID = m.group(1)
 ll("PHPSessionID GET!! : "+PHPSessionID,"m")
 
 # make the signin request
+ll("attempting to sign in as user:"+p["emailS"])
 reqE = extractLinkData("https://accounts.pixiv.net/api/login?lang=en","POST",{"pixiv_id":p["emailS"],"password":p["passwordS"],"captcha":"","g_recaptcha_response":"","post_key":postKey,"source":"accounts",},{"Connection":"keep-alive","Cookie":"PHPSESSID="+PHPSessionID,})
 ll("pixiv says : "+reqE["txt"],"m")
 
 # get the newest cookie before we proceed
 m = re.search('PHPSESSID=(.+?);',reqE["txtHeader"])
-if not m:fail("ERROR : could not find login response cookie [either -> your fault - invalid signin information OR developer's fault - pixiv changed their login page format]")
+if not m:fail("ERROR : could not find login response cookie [either -> your fault - invalid signin information, temporarily captcha-gated account, unexplainably temporarily locked account OR developer's fault - pixiv changed their login page format]. Try visiting pixiv in a web browser and logging in manually with your designated account to see if the login page says anything interesting. In the worst case, try making a new account (and update your authentication text file accordingly).")
 PHPSessionID = m.group(1)
 ll("PHPSessionID GET!! : "+PHPSessionID,"m")
 
