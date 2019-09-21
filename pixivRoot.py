@@ -360,7 +360,8 @@ class Stage1Job():
 				warn("WARNING : User:"+str(userIDS)+"'s page is not viewable [probably a closed account].")
 				return
 			
-			usernameS = p_regex('<title>「(.+?)」',txtS)[1]
+			# [21 Sep 2019] change from '<title>「(.+?)」'
+			usernameS = p_regex('<title>(.+?) - pixiv</title>',txtS)[1]
 			self.foldername = esc(usernameS+"#"+userIDS)
 			assertFolder(foldername=self.foldername,wildname="*"+esc("#"+userIDS))
 			
@@ -404,7 +405,7 @@ class Stage1Job():
 			# [!] This API page is limited to 100 entries at a time.
 			rolodex0 = []
 			for illustIDNChunkA in p_lChunk(illustIDNA,100):
-				datO = p_extractJsonO("https://www.pixiv.net/ajax/user/5607168/profile/illusts?"+("&".join(map(lambda illustIDN:"ids%5B%5D="+str(illustIDN),illustIDNChunkA)))+"&is_manga_top=0")
+				datO = p_extractJsonO("https://www.pixiv.net/ajax/user/5607168/profile/illusts?"+("&".join(map(lambda illustIDN:"ids%5B%5D="+str(illustIDN),illustIDNChunkA)))+"&is_manga_top=0&work_category=&is_first_page=0") # [21 Sep 2019] forced to add &work_category=&is_first_page=0, interestingly work_category doesn't need a value
 				rolodex0 += map(lambda tuple:{
 					"illustS"   : str(tuple[1]["id"       ]), # [!] Crucial str() calls to convert unicode type to str type.
 					"pageC"     :     tuple[1]["pageCount"] ,
