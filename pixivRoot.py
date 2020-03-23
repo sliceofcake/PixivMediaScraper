@@ -85,6 +85,12 @@ def assertFile(filenameS):
 		file.write("")
 		file.close()
 def extractLinkData(linkS,method="GET",dataO={},headerO={},returnFalseOnFailureF=False):
+	
+	# 22 Mar 2020
+	# • pixiv is now requiring User-Agent in the header, otherwise will serve a 403(,1010[?]) error
+	if "User-Agent" not in headerO:
+		headerO["User-Agent"] = ""
+	
 	req = urllib2.Request(linkS,urllib.urlencode(dataO),headerO)
 	req.get_method = lambda : method
 	try:response = urllib2.urlopen(req)
