@@ -88,8 +88,10 @@ def extractLinkData(linkS,method="GET",dataO={},headerO={},returnFalseOnFailureF
 	
 	# 22 Mar 2020
 	# • pixiv is now requiring User-Agent in the header, otherwise will serve a 403(,1010[?]) error
+	# 17 Jan 2021
+	# - pixiv is now requiring that the User-Agent start with something reasonable, such as "Mozilla/5.0".
 	if "User-Agent" not in headerO:
-		headerO["User-Agent"] = ""
+		headerO["User-Agent"] = "Mozilla/5.0"
 	
 	req = urllib2.Request(linkS,urllib.urlencode(dataO),headerO)
 	req.get_method = lambda : method
@@ -349,10 +351,10 @@ class Stage1Job():
 			
 			# GET USERNAME
 			#-------------
-			txtS = p_extractTxt("https://www.pixiv.net/member.php?id="+userIDS,True)
+			txtS = p_extractTxt("https://www.pixiv.net/users/"+userIDS,True)
 			if txtS is False:
 				msgS  = "WARNING : User:"+str(userIDS)+"'s page is not viewable."
-				msgS += os.linesep+p["indentS"]+"This could be an authentication issue causing a redirect loop (it if happens for all artists)."
+				msgS += os.linesep+p["indentS"]+"This could be an authentication issue causing a redirect loop (if it happens for all artists)."
 				msgS += os.linesep+p["indentS"]+"This could be a closed account (if it only happens for a few artists)."
 				warn(msgS)
 				return
@@ -411,7 +413,7 @@ class Stage1Job():
 			# [!] This API page is limited to 100 entries at a time.
 			rolodex0 = []
 			for illustIDNChunkA in p_lChunk(illustIDNA,100):
-				datO = p_extractJsonO("https://www.pixiv.net/ajax/user/5607168/profile/illusts?"+("&".join(map(lambda illustIDN:"ids%5B%5D="+str(illustIDN),illustIDNChunkA)))+"&is_manga_top=0&work_category=&is_first_page=0") # [21 Sep 2019] forced to add &work_category=&is_first_page=0, interestingly work_category doesn't need a value
+				datO = p_extractJsonO("https://www.pixiv.net/ajax/user/"+userIDS+"/profile/illusts?"+("&".join(map(lambda illustIDN:"ids%5B%5D="+str(illustIDN),illustIDNChunkA)))+"&is_manga_top=0&work_category=&is_first_page=0") # [21 Sep 2019] forced to add &work_category=&is_first_page=0, interestingly work_category doesn't need a value
 				rolodex0 += map(lambda tuple:{
 					"illustS"   : str(tuple[1]["id"       ]), # [!] Crucial str() calls to convert unicode type to str type.
 					"pageC"     :     tuple[1]["pageCount"] ,
@@ -438,12 +440,14 @@ class Stage1Job():
 			
 			# COMPILE DOWNLOAD JOBS
 			#----------------------
+			extensionSA_ALTER = list(p["extensionSA"])
+			pageTypeSA_ALTER  = list(p["pageTypeSA" ])
 			for row1 in rolodex1:
 				
 				row2 = {
 					"illustS"  : row1["illustS"],
 					"pageS"    : row1["pageS"  ],
-					"refererS" : "http://www.pixiv.net/member_illust.php?mode=medium&illust_id="+row1["userS"],
+					"refererS" : "https://www.pixiv.net/",
 					"userS"    : row1["userS"  ],}
 				
 				localF = False
@@ -466,11 +470,13 @@ class Stage1Job():
 				row2["dateS"  ] = p_regex('\d{4}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\/',row1["urlNotS"])[0]
 				row2["domainS"] = p_regex('https?:\/\/[^<>\s]+?\/'                    ,row1["urlNotS"])[0]
 				
+				# Guess at what the URL is from a small pool of possibilities.
+				# Would obviously love to just know this ahead of time, but can't figure out the internal-API call for that.
 				breakN = 0
 				remoteF = False
-				for pageTypeS in p["pageTypeSA"]:
+				for pageTypeS in pageTypeSA_ALTER:
 					breakN = 0
-					for extensionS in p["extensionSA"]:
+					for extensionS in extensionSA_ALTER:
 						breakN = 0
 						urlS  = row2["domainS"]+"img-original/img/"+row2["dateS"]+row2["illustS"]+"_"+pageTypeS+str(row2["pageS"])+extensionS
 						pathS = self.foldername                          +"/"+esc(row2["illustS"]+"_"+pageTypeS+str(row2["pageS"])+extensionS)
@@ -496,6 +502,14 @@ class Stage1Job():
 					continue # SURPRISE
 				if not remoteF:
 					fail("Could not find extension of illust:"+row2["illustS"])
+				
+				# Dynamically reorder the URL-guess arrays to reflect the most recently found entry.
+				# Certain artists seem to favor certain formats, so this should improve performance over a hard-coded priority order.
+				# Remove the element and insert it at the front, for the next go-around to read.
+				pageTypeSA_ALTER.remove(pageTypeS) # Element ought to be in collection.
+				pageTypeSA_ALTER.insert(0,pageTypeS)
+				extensionSA_ALTER.remove(extensionS) # Element ought to be in collection.
+				extensionSA_ALTER.insert(0,extensionS)
 				
 				ll(      row2["userS"  ].rjust(9," ")+" user"
 				+  " | "+row2["illustS"].rjust(9," ")+" illust"
